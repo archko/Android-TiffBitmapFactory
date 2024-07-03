@@ -13,7 +13,7 @@ If you use proguard add this to you config file:
 - remove saver
 - reuse decoder, it's very usefull,if a tiff is very large, a decoder can decode a tile once, but old factory is static and can't be reused.
 
-thanks TiffImage:https://github.com/m4coding/TiffImage, another decode tiff repo
+thanks TiffImage:https://github.com/m4coding/TiffImage, another decode tiff repo, update tiff to 4.0.5
 # TiffImage
 decode tiff image for android
 
