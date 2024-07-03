@@ -45,7 +45,6 @@ NativeDecoder::NativeDecoder(JNIEnv *e, jclass c, jint fd, jobject opts, jobject
 
 //Constructor for decoding from file path
 NativeDecoder::NativeDecoder(JNIEnv *e, jclass c, jstring path, jobject opts, jobject listener) {
-
     decodingMode = DECODE_MODE_FILE_PATH;
 
     //availableMemory = 8000 * 8000 * 4; // use 244Mb restriction for decoding full image

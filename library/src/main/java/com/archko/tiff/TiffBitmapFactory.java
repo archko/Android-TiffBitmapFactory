@@ -15,7 +15,7 @@ import java.io.File;
  */
 public class TiffBitmapFactory {
 
-    public long mNativeContext = 1; // accessed by native methods
+    private long mNativeContext = 1; // accessed by native methods
 
     static {
         LibraryLoader.load();
@@ -53,7 +53,6 @@ public class TiffBitmapFactory {
          * With this configuration, each pixel requires 1 byte of memory.
          */
         ALPHA_8(8);
-
 
         final int ordinal;
 
@@ -116,9 +115,9 @@ public class TiffBitmapFactory {
      */
     public Bitmap decodeFile(File file, Options options, IProgressListener listener) throws CantOpenFileException, DecodeTiffException, NotEnoughtMemoryException {
         long time = System.currentTimeMillis();
-        Log.i("THREAD", "Starting decode " + file.getAbsolutePath());
+        //Log.i("THREAD", "Starting decode " + file.getAbsolutePath());
         Bitmap mbp = nativeDecodePath(file.getAbsolutePath(), options, listener);
-        Log.w("THREAD", "elapsed ms: " + (System.currentTimeMillis() - time) + " for " + file.getAbsolutePath());
+        //Log.w("THREAD", "elapsed ms: " + (System.currentTimeMillis() - time) + " for " + file.getAbsolutePath());
         return mbp;
     }
 
@@ -137,7 +136,6 @@ public class TiffBitmapFactory {
      */
     public Bitmap decodePath(String path) throws CantOpenFileException, DecodeTiffException, NotEnoughtMemoryException {
         Options options = new Options();
-        options.inSampleSize = 64;
         return decodePath(path, options, null);
     }
 
@@ -157,7 +155,7 @@ public class TiffBitmapFactory {
      * or cannot be decoded into a bitmap, the function returns null.
      */
     public Bitmap decodePath(String path, Options options) throws CantOpenFileException, DecodeTiffException, NotEnoughtMemoryException {
-        return decodePath(path, options);
+        return decodePath(path, options, null);
     }
 
     /**
@@ -177,10 +175,7 @@ public class TiffBitmapFactory {
      * or cannot be decoded into a bitmap, the function returns null.
      */
     public Bitmap decodePath(String path, Options options, IProgressListener listener) throws CantOpenFileException, DecodeTiffException, NotEnoughtMemoryException {
-        long time = System.currentTimeMillis();
-        Log.i("THREAD", "Starting decode " + path);
         Bitmap mbp = nativeDecodePath(path, options, listener);
-        //Log.w("THREAD", "elapsed ms: " + (System.currentTimeMillis() - time) + " for " + path);
         return mbp;
     }
 
@@ -232,26 +227,23 @@ public class TiffBitmapFactory {
      * @throws NotEnoughtMemoryException when for decoding of image system need more memory than {@link Options#inAvailableMemory} or default value
      */
     public Bitmap decodeFileDescriptor(int fileDescriptor, Options options, IProgressListener listener) throws CantOpenFileException, DecodeTiffException, NotEnoughtMemoryException {
-        //long time = System.currentTimeMillis();
-        Log.i("THREAD", "Starting decode descriptor " + fileDescriptor);
         Bitmap mbp = nativeDecodeFD(fileDescriptor, options, listener);
-        //Log.w("THREAD", "elapsed ms: " + (System.currentTimeMillis() - time) + " for descriptor " + fileDescriptor);
         return mbp;
     }
 
-    //public static void setup(int fd) {
-    //    Log.i("THREAD", "setup descriptor " + fd);
-    //    nativeSetup(fd, new Options(), null);
-    //}
+    public void setup(int fd) {
+        Log.i("THREAD", "setup descriptor " + fd);
+        nativeSetupFd(fd, new Options(), null);
+    }
 
     public void setup(String path) {
         Log.i("THREAD", "setup path " + path);
-        nativeSetup(path, new Options(), null);
+        nativeSetupPath(path, new Options(), null);
     }
 
-    //private static native void nativeSetup(int fd, Options options, IProgressListener listener);
+    private native void nativeSetupFd(int fd, Options options, IProgressListener listener);
 
-    private native void nativeSetup(String path, Options options, IProgressListener listener);
+    private native void nativeSetupPath(String path, Options options, IProgressListener listener);
 
     private native Bitmap nativeDecodePath(String path, Options options, IProgressListener listener);
 
@@ -262,7 +254,7 @@ public class TiffBitmapFactory {
      *
      * @param fd
      */
-    public native void nativeCloseFd();
+    public native void nativeClose();
 
     /**
      * Options class to specify decoding parameterMs

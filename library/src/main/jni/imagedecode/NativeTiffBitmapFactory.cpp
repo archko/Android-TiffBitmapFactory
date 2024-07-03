@@ -26,6 +26,16 @@ static NativeDecoder *getNativeDecoder(JNIEnv *env, jclass thiz) {
     return pDecoder;
 }
 
+static void setNativeDecoder(JNIEnv *env, jclass thiz, long pDecoder) {
+    NativeDecoder *old = (NativeDecoder *) env->GetLongField(thiz, fields.context);
+    //释放之前的
+    if (old != NULL) {
+        delete old;
+        old = NULL;
+    }
+    env->SetLongField(thiz, fields.context, pDecoder);
+}
+
 static void setCacheDecoder(NativeDecoder *pDecoder) {
     if (decoder != NULL) {
         delete decoder;
@@ -38,16 +48,6 @@ static NativeDecoder *getCacheDecoder() {
     return decoder;
 }
 
-static void setNativeDecoder(JNIEnv *env, jclass thiz, long decoder) {
-    NativeDecoder *old = (NativeDecoder *) env->GetLongField(thiz, fields.context);
-    //释放之前的
-    if (old != NULL) {
-        delete old;
-        old = NULL;
-    }
-    env->SetLongField(thiz, fields.context, decoder);
-}
-
 jobject JNI_TIFF_FN(TiffBitmapFactory_nativeDecodePath)
         (JNIEnv *env, jobject thiz,
          jstring path, jobject options, jobject listener) {
@@ -55,7 +55,6 @@ jobject JNI_TIFF_FN(TiffBitmapFactory_nativeDecodePath)
     //decoder = new NativeDecoder(env, clazz, path, options, listener);
     NativeDecoder *pDecoder = getCacheDecoder();
     jobject java_bitmap = pDecoder->getBitmap(path, 0, options, listener);
-    //delete(decoder);
 
     return java_bitmap;
 }
@@ -66,12 +65,11 @@ jobject JNI_TIFF_FN (TiffBitmapFactory_nativeDecodeFD)
     jclass clazz = env->GetObjectClass(obj);
     //decoder = new NativeDecoder(env, clazz, fd, options, listener);
     jobject java_bitmap = getCacheDecoder()->getBitmap(NULL, fd, options, listener);
-    //delete(decoder);
 
     return java_bitmap;
 }
 
-void JNI_TIFF_FN(TiffBitmapFactory_nativeCloseFd)
+void JNI_TIFF_FN(TiffBitmapFactory_nativeClose)
         (JNIEnv *env, jobject clazz) {
     if (NULL != decoder) {
         LOGI("delete decoder:%d", (long) decoder);
@@ -80,7 +78,30 @@ void JNI_TIFF_FN(TiffBitmapFactory_nativeCloseFd)
     }
 }
 
-void JNI_TIFF_FN(TiffBitmapFactory_nativeSetup)
+void JNI_TIFF_FN(TiffBitmapFactory_nativeSetupFd)
+        (JNIEnv *env, jobject thiz,
+         jint jFd,
+         jobject options,
+         jobject listener) {
+    jclass clazz = env->GetObjectClass(thiz);
+    fields.context = env->GetFieldID(clazz, "mNativeContext", "J");
+    if (fields.context == NULL) {
+        return;
+    }
+
+    NativeDecoder *pDecoder = new NativeDecoder(env, clazz, jFd, options, listener);
+    if (pDecoder == NULL) {
+        //jniThrowException(env, "java/lang/RuntimeException", "Out of memory");
+        return;
+    }
+
+    LOGI("pDecoder:%d, context:%d", (long) pDecoder, fields.context);
+    setCacheDecoder(pDecoder);
+
+    env->DeleteLocalRef(clazz);
+}
+
+void JNI_TIFF_FN(TiffBitmapFactory_nativeSetupPath)
         (JNIEnv *env, jobject thiz,
          jstring path,
          jobject options,
@@ -166,7 +187,7 @@ jstring nativeTojstring(JNIEnv *env, const char *str) {
     jfieldID mString_fieldID;//JNIFieldClass类对象变量mString属性ID
     jfieldID mInt_fieldID;//JNIFieldClass类对象变量mInt属性ID
 
-    *//******获取JNIFieldClass类实例变量mString的值并修改********//*
+    //获取JNIFieldClass类实例变量mString的值并修改
     //1.通过JNIFieldClass类实例object_in获取Class的引用
     clazz = env->GetObjectClass(object_in);
     if (clazz == NULL) {
@@ -196,7 +217,7 @@ jstring nativeTojstring(JNIEnv *env, const char *str) {
     //5.释放局部引用
     env->DeleteLocalRef(j_string);
 
-    *//******获取JNIFieldClass类实例int型变量mInt的值并修改********//*
+    //获取JNIFieldClass类实例int型变量mInt的值并修改
     //6.获取JNIFieldClass类实例int型变量mString的属性ID
     mInt_fieldID = env->GetFieldID(clazz, "mInt", "I");
     if (mInt_fieldID == NULL) {

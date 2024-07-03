@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
     private Button mStreamButton, mResButton, mAssetsButton;
     private Button factoryButton, recycleButton;
     private TextView mInfoTextView;
-    private String path1 = "/sdcard/DCIM/院本清明上河图.清.陈枚等合绘.65500X1970像素.台湾故宫博物院藏.jpg";
     private String path2 = "/sdcard/DCIM/院本清明上河图.清.陈枚等合绘.67704X2036像素.台湾故宫博物院藏[Dujin.org].tif";
     private String path3 = "/sdcard/DCIM/清院本 清明上河图(一版)陈枚、孙祜、金昆、戴洪、程志道绢本 台北故宫35.6x1152.tif";
 
@@ -203,13 +202,13 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.factory_button) {
                 if (null == factory) {
                     factory = new TiffBitmapFactory();
-                    factory.setup(path2);
+                    factory.setup(mPath);
                 }
-                bitmap = factory.decodePath(path2);
+                bitmap = factory.decodePath(mPath);
                 mImageView.setImageBitmap(bitmap);
                 isSetBitmap = false;
             } else if (id == R.id.recycle_button) {
-                factory.nativeCloseFd();
+                factory.nativeClose();
                 factory = null;
 
                 mImageView.setImageBitmap(null);

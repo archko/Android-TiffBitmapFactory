@@ -11,37 +11,22 @@
 
 #include "Log.h"
 
-#ifndef _Included_org_beyka_tiffbitmapfactory_TiffBitmapFactory
-#define _Included_org_beyka_tiffbitmapfactory_TiffBitmapFactory
-#ifdef __cplusplus
-extern "C" {
-#endif
-/*
- * Class:     com_example_beyka_tiffexample_TiffBitmapFactory
- * Method:    nativeDecodePath
- * Signature: (Ljava/lang/String;I)Landroid/graphics/Bitmap;
- */
-extern "C" jobject Java_org_beyka_tiffbitmapfactory_TiffBitmapFactory_nativeDecodePath
-        (JNIEnv *, jobject, jstring, jobject, jobject);
-
-/*
- * Class:     com_example_beyka_tiffexample_TiffBitmapFactory
- * Method:    nativeDecodePath
- * Signature: (Ljava/lang/String;I)Landroid/graphics/Bitmap;
- */
-extern "C" jobject Java_org_beyka_tiffbitmapfactory_TiffBitmapFactory_nativeDecodeFD
-        (JNIEnv *, jobject, jint, jobject, jobject);
-
-/*
- * Class:     com_example_beyka_tiffexample_TiffBitmapFactory
- * Method:    nativeCloseFd
- * Signature: (Ljava/lang/String;I)Landroid/graphics/Bitmap;
- */
-extern "C" void Java_org_beyka_tiffbitmapfactory_TiffBitmapFactory_nativeCloseFd
-        (JNIEnv *, jobject);
-
-
-#ifdef __cplusplus
-}
-#endif
-#endif
+//#ifndef _Included_com_archko_tiff_TiffBitmapFactory
+//#define _Included_com_archko_tiff_TiffBitmapFactory
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
+//extern "C" jobject Java_com_archko_tiff_TiffBitmapFactory_nativeDecodePath
+//        (JNIEnv *, jobject, jstring, jobject, jobject);
+//
+//extern "C" jobject Java_com_archko_tiff_TiffBitmapFactory_nativeDecodeFD
+//        (JNIEnv *, jobject, jint, jobject, jobject);
+//
+//extern "C" void Java_com_archko_tiff_TiffBitmapFactory_nativeClose
+//        (JNIEnv *, jobject);
+//
+//
+//#ifdef __cplusplus
+//}
+//#endif
+//#endif
