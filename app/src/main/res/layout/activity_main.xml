@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context="com.mcs.tiffimage.MainActivity">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/decode_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="decode"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/decode_stream_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="decode_stream"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/decode_resource_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="decode_resource"
+            android:textAllCaps="false" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/decode_assets_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="decode_assets"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/info_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="info"
+            android:textAllCaps="false" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/info_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</LinearLayout>
