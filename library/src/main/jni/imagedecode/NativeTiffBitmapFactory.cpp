@@ -117,7 +117,7 @@ jobject getImageInfoByFd(JNIEnv *env, jclass thiz, jint fd) {
         imageInfo.width = w;
         imageInfo.height = h;
         imageInfo.ori = ori;
-        TIFFClose(tif);
+        //TIFFClose(tif);
     } else {
         LOGE("=======TiffImage::getImageInfo TIFFFdOpen error fd==%d", fd);
     }

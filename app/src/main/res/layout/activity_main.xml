@@ -54,13 +54,29 @@
             android:layout_marginLeft="10dp"
             android:text="info"
             android:textAllCaps="false" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
         <Button
             android:id="@+id/factory_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
-            android:text="factory"
+            android:text="factory_path"
             android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/factory_fd_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="factory_fd"
+            android:textAllCaps="false" />
+
         <Button
             android:id="@+id/recycle_button"
             android:layout_width="wrap_content"

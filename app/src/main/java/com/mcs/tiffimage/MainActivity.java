@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.text.format.Formatter;
 import android.util.Log;
@@ -24,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private String mPath, mStringPath;
     private Button mInfoButton;
     private Button mStreamButton, mResButton, mAssetsButton;
-    private Button factoryButton, recycleButton;
+    private Button factoryButton, factoryFdButton, recycleButton;
     private TextView mInfoTextView;
     private String path2 = "/sdcard/DCIM/院本清明上河图.清.陈枚等合绘.67704X2036像素.台湾故宫博物院藏[Dujin.org].tif";
     private String path3 = "/sdcard/DCIM/清院本 清明上河图(一版)陈枚、孙祜、金昆、戴洪、程志道绢本 台北故宫35.6x1152.tif";
@@ -62,13 +64,13 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         } else {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 } else {
                     ActivityCompat.requestPermissions(this,
-                            new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                             1);
                 }
             }
@@ -95,6 +97,8 @@ public class MainActivity extends AppCompatActivity {
 
         factoryButton = findViewById(R.id.factory_button);
         factoryButton.setOnClickListener(mOnClickListener);
+        factoryFdButton = findViewById(R.id.factory_fd_button);
+        factoryFdButton.setOnClickListener(mOnClickListener);
         recycleButton = findViewById(R.id.recycle_button);
         recycleButton.setOnClickListener(mOnClickListener);
     }
@@ -201,15 +205,36 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.factory_button) {
                 if (null == factory) {
                     factory = new TiffBitmapFactory();
-                    TiffBitmapFactory.ImageInfo info = factory.setup(path2);
+                    TiffBitmapFactory.ImageInfo info = factory.setupPath(path2);
                     String text = String.format("width==%s, height=%s, ori:%s", info.width, info.height, info.ori);
                     System.out.println(text);
                     mInfoTextView.setText(text);
                     mInfoTextView.setVisibility(View.VISIBLE);
                 }
-                bitmap = factory.decodePath(path2);
+                TiffBitmapFactory.Options options = new TiffBitmapFactory.Options();
+                options.inSampleSize = 16;
+                bitmap = factory.decodePath(path2, options);
                 mImageView.setImageBitmap(bitmap);
                 isSetBitmap = false;
+            } else if (id == R.id.factory_fd_button) {
+                /*ParcelFileDescriptor descriptor = null;
+                try {
+                    descriptor = ParcelFileDescriptor.open(new File(path2), ParcelFileDescriptor.MODE_READ_ONLY);
+                } catch (FileNotFoundException e) {
+                }
+                if (null == factory) {
+                    factory = new TiffBitmapFactory();
+                    TiffBitmapFactory.ImageInfo info = factory.setupFd(descriptor.getFd());
+                    String text = String.format("width==%s, height=%s, ori:%s", info.width, info.height, info.ori);
+                    System.out.println(text);
+                    mInfoTextView.setText(text);
+                    mInfoTextView.setVisibility(View.VISIBLE);
+                }
+                TiffBitmapFactory.Options options = new TiffBitmapFactory.Options();
+                options.inSampleSize = 16;
+                bitmap = factory.decodeFileDescriptor(descriptor.getFd(), options);
+                mImageView.setImageBitmap(bitmap);
+                isSetBitmap = false;*/
             } else if (id == R.id.recycle_button) {
                 factory.nativeClose();
                 factory = null;

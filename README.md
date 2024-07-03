@@ -1,23 +1,59 @@
 # fork from Android-TiffBitmapFactory
-TiffBitmapFactory is an Android library that allows opening and saving images in *.tif format (See [Wikipedia](https://en.wikipedia.org/wiki/Tagged_Image_File_Format)) on Android devices.
-[Android-TiffBitmapFactory] (https://github.com/Beyka/Android-TiffBitmapFactory)
+
+TiffBitmapFactory is an Android library that allows opening and saving images in *.tif format (
+See [Wikipedia](https://en.wikipedia.org/wiki/Tagged_Image_File_Format)) on Android devices.
+[Android-TiffBitmapFactory](https://github.com/Beyka/Android-TiffBitmapFactory)
 
 # Proguard
+
 If you use proguard add this to you config file:
+
 ```Gradle
--keep class org.beyka.tiffbitmapfactory.**{ *; }
+-keep class com.archko.tiff.**{ *; }
 ```
 
 # updates
+
 - remove convert
 - remove saver
-- reuse decoder, it's very usefull,if a tiff is very large, a decoder can decode a tile once, but old factory is static and can't be reused.
+- remove libpng
+- reuse decoder, it's very usefull,if a tiff is very large, a decoder can decode a tile once, but
+  old factory is static and can't be reused.
 - change origBufferSize to long, large tiff exceed int.max value, some tiff is large than 2gb.
+- remove availableMemory, in my redmi k40 pro, it always 256mb.
 
-thanks TiffImage:https://github.com/m4coding/TiffImage, another decode tiff repo, update tiff to 4.0.5
+# setup and decode tiff
+
+private native ImageInfo nativeSetupFd(int fd, Options options, IProgressListener listener);
+private native ImageInfo nativeSetupPath(String path, Options options, IProgressListener
+listener);
+if a tiff is large, before decode, setup and return imageinfo is usefull.
+
+``` 
+TiffBitmapFactory factory = new TiffBitmapFactory();
+TiffBitmapFactory.ImageInfo info = factory.setupPath(path2);
+String text = String.format("width==%s, height=%s, ori:%s", info.width, info.height, info.ori);
+System.out.println(text);
+mInfoTextView.setText(text);
+
+//decode tile or fullsize image
+bitmap = factory.decodePath(path2);
+mImageView.setImageBitmap(bitmap);
+
+bitmap = decodePath(String path, Options options) //decode tile
+
+//destroy:
+factory.nativeClose();
+
+setupFd(),current is not avaliable
+```
+
+thanks TiffImage: https://github.com/m4coding/TiffImage, another decode tiff repo, update tiff to
+4.0.5
+
 # TiffImage
-decode tiff image for android
 
+decode tiff image for android
 
 解码tiff图片，基于libtiff开源库
 
@@ -26,7 +62,6 @@ decode tiff image for android
 ### 支持 ###
 
 本地路径读取，流方式的读取，Resource资源读取，assets资源读取
-
 
 ### 使用 ###
 

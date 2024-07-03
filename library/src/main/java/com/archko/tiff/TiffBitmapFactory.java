@@ -231,12 +231,12 @@ public class TiffBitmapFactory {
         return mbp;
     }
 
-    public ImageInfo setup(int fd) {
+    public ImageInfo setupFd(int fd) {
         Log.i("THREAD", "setup descriptor " + fd);
         return nativeSetupFd(fd, new Options(), null);
     }
 
-    public ImageInfo setup(String path) {
+    public ImageInfo setupPath(String path) {
         Log.i("THREAD", "setup path " + path);
         return nativeSetupPath(path, new Options(), null);
     }
@@ -274,7 +274,7 @@ public class TiffBitmapFactory {
             inJustDecodeBounds = false;
             inSampleSize = 1;
             inDirectoryNumber = 0;
-            inAvailableMemory = 8000 * 8000 * 4;
+            //inAvailableMemory = 8000 * 8000 * 4;
 
             outWidth = -1;
             outHeight = -1;
@@ -352,7 +352,7 @@ public class TiffBitmapFactory {
          * <p>-1 means memory is unlimited.</p>
          * <p>Default value is 244Mb</p>
          */
-        public long inAvailableMemory;
+        //public long inAvailableMemory;
 
         /**
          * If this is non-null, the decoder will try to decode into this
