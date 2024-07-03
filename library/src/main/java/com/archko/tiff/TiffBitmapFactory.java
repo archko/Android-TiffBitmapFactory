@@ -231,19 +231,19 @@ public class TiffBitmapFactory {
         return mbp;
     }
 
-    public void setup(int fd) {
+    public ImageInfo setup(int fd) {
         Log.i("THREAD", "setup descriptor " + fd);
-        nativeSetupFd(fd, new Options(), null);
+        return nativeSetupFd(fd, new Options(), null);
     }
 
-    public void setup(String path) {
+    public ImageInfo setup(String path) {
         Log.i("THREAD", "setup path " + path);
-        nativeSetupPath(path, new Options(), null);
+        return nativeSetupPath(path, new Options(), null);
     }
 
-    private native void nativeSetupFd(int fd, Options options, IProgressListener listener);
+    private native ImageInfo nativeSetupFd(int fd, Options options, IProgressListener listener);
 
-    private native void nativeSetupPath(String path, Options options, IProgressListener listener);
+    private native ImageInfo nativeSetupPath(String path, Options options, IProgressListener listener);
 
     private native Bitmap nativeDecodePath(String path, Options options, IProgressListener listener);
 
@@ -547,5 +547,17 @@ public class TiffBitmapFactory {
          */
         public String outHostComputer = "";
 
+    }
+
+    public static class ImageInfo {
+        public int width;
+        public int height;
+        public int ori;
+
+        public ImageInfo(int width, int height, int ori) {
+            this.width = width;
+            this.height = height;
+            this.ori = ori;
+        }
     }
 }

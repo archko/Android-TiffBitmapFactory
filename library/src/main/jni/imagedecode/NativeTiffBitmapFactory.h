@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include "NativeExceptions.h"
 #include "NativeDecoder.h"
+
+#include "JNIHelpers.h"
 /* Header for class NativeTiffBitmapFactory */
 
 #include "Log.h"
@@ -30,3 +32,9 @@
 //}
 //#endif
 //#endif
+
+typedef struct ImageInfo {
+    int width;
+    int height;
+    int ori;
+} ImageInfo;

@@ -1,6 +1,7 @@
 using namespace std;
 
 #ifdef __cplusplus
+
 extern "C" {
 #endif
 
@@ -44,8 +45,98 @@ static void setCacheDecoder(NativeDecoder *pDecoder) {
     decoder = pDecoder;
 }
 
+static void cleanCacheDecoder() {
+    if (decoder != NULL) {
+        delete decoder;
+        decoder = NULL;
+    }
+}
+
 static NativeDecoder *getCacheDecoder() {
     return decoder;
+}
+
+static void logError(const char *module, const char *fmt, va_list ap) {
+    char errorBuffer[1024];
+    vsnprintf(errorBuffer, 1024, fmt, ap);
+    LOGE("========logError module==%s, error%s", module, errorBuffer);
+}
+
+ImageInfo getImageInfo(const char *path) {
+    ImageInfo imageInfo;
+    imageInfo.width = -1;
+    imageInfo.height = -1;
+
+    //自定义Tiff error重定向，输出error信息
+    TIFFSetErrorHandler(logError);
+
+    TIFF *tif = TIFFOpen(path, "r");
+    if (tif) {
+        int w = 0, h = 0;
+        TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
+        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
+        imageInfo.width = w;
+        imageInfo.height = h;
+        TIFFClose(tif);
+    } else {
+        LOGE("=======TiffImage::getImageInfo TIFFOpen error path==%s", path);
+    }
+
+    return imageInfo;
+}
+
+jobject setImageInfo(JNIEnv *env, const ImageInfo &imageInfo) {
+    jclass clazz = env->FindClass("com/archko/tiff/TiffBitmapFactory$ImageInfo");
+    jmethodID jmethodId = env->GetMethodID(clazz, "<init>", "(III)V");
+    if (!jmethodId) {
+        LOGE("=========to GetMethodID error");
+    }
+    jobject obj = env->NewObject(clazz, jmethodId, imageInfo.width, imageInfo.height,
+                                 imageInfo.ori);
+    env->DeleteLocalRef(clazz);
+
+    return obj;
+}
+
+jobject getImageInfoByFd(JNIEnv *env, jclass thiz, jint fd) {
+    ImageInfo imageInfo;
+    imageInfo.width = -1;
+    imageInfo.height = -1;
+    imageInfo.ori = 0;
+
+    //自定义Tiff error重定向，输出error信息
+    TIFFSetErrorHandler(logError);
+
+    TIFF *tif = TIFFFdOpen(fd, "", "r");
+    if (tif) {
+        int w = 0, h = 0;
+        int ori = 0;
+        TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
+        TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
+        TIFFGetField(tif, TIFFTAG_ORIENTATION, &ori);
+        imageInfo.width = w;
+        imageInfo.height = h;
+        imageInfo.ori = ori;
+        TIFFClose(tif);
+    } else {
+        LOGE("=======TiffImage::getImageInfo TIFFFdOpen error fd==%d", fd);
+    }
+    return setImageInfo(env, imageInfo);
+}
+
+jobject getImageInfoByPath(JNIEnv *env, jclass thiz, jstring path) {
+    const char *tmp = env->GetStringUTFChars(path, NULL);
+    if (!tmp) {
+        LOGE("OutOfMemoryError");
+        return NULL;
+    }
+
+    ImageInfo imageInfo = getImageInfo(tmp);
+
+    env->ReleaseStringUTFChars(path, tmp);
+    tmp = NULL;
+
+    return setImageInfo(env, imageInfo);
 }
 
 jobject JNI_TIFF_FN(TiffBitmapFactory_nativeDecodePath)
@@ -78,52 +169,60 @@ void JNI_TIFF_FN(TiffBitmapFactory_nativeClose)
     }
 }
 
-void JNI_TIFF_FN(TiffBitmapFactory_nativeSetupFd)
+jobject JNI_TIFF_FN(TiffBitmapFactory_nativeSetupFd)
         (JNIEnv *env, jobject thiz,
          jint jFd,
          jobject options,
          jobject listener) {
+    cleanCacheDecoder();
+
     jclass clazz = env->GetObjectClass(thiz);
-    fields.context = env->GetFieldID(clazz, "mNativeContext", "J");
-    if (fields.context == NULL) {
-        return;
-    }
+    //fields.context = env->GetFieldID(clazz, "mNativeContext", "J");
+    //if (fields.context == NULL) {
+    //    return;
+    //}
 
     NativeDecoder *pDecoder = new NativeDecoder(env, clazz, jFd, options, listener);
     if (pDecoder == NULL) {
         //jniThrowException(env, "java/lang/RuntimeException", "Out of memory");
-        return;
+        return NULL;
     }
 
-    LOGI("pDecoder:%d, context:%d", (long) pDecoder, fields.context);
+    //LOGI("pDecoder:%ld, context:%ld", (long) pDecoder, fields.context);
     setCacheDecoder(pDecoder);
 
     env->DeleteLocalRef(clazz);
+
+    return getImageInfoByFd(env, clazz, jFd);
 }
 
-void JNI_TIFF_FN(TiffBitmapFactory_nativeSetupPath)
+jobject JNI_TIFF_FN(TiffBitmapFactory_nativeSetupPath)
         (JNIEnv *env, jobject thiz,
          jstring path,
          jobject options,
          jobject listener) {
+    cleanCacheDecoder();
+
     jclass clazz = env->GetObjectClass(thiz);
-    fields.context = env->GetFieldID(clazz, "mNativeContext", "J");
-    if (fields.context == NULL) {
-        return;
-    }
+    //fields.context = env->GetFieldID(clazz, "mNativeContext", "J");
+    //if (fields.context == NULL) {
+    //    return;
+    //}
 
     NativeDecoder *pDecoder = new NativeDecoder(env, clazz, path, options, listener);
     if (pDecoder == NULL) {
         //jniThrowException(env, "java/lang/RuntimeException", "Out of memory");
-        return;
+        return NULL;
     }
 
-    LOGI("pDecoder:%d, context:%d", (long) pDecoder, fields.context);
+    //LOGI("pDecoder:%ld, context:%ld", (long) pDecoder, fields.context);
     //env->SetLongField(thiz, fields.context, (long) pDecoder);
     //setNativeDecoder(env, clazz, (long) pDecoder);
     setCacheDecoder(pDecoder);
 
     env->DeleteLocalRef(clazz);
+
+    return getImageInfoByPath(env, clazz, path);
 }
 
 // ================= test jni =================

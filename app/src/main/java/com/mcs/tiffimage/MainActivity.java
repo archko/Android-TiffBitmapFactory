@@ -17,9 +17,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.mcs.library.TiffImage;
-
 import com.archko.tiff.TiffBitmapFactory;
+import com.mcs.library.TiffImage;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -202,9 +201,13 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.factory_button) {
                 if (null == factory) {
                     factory = new TiffBitmapFactory();
-                    factory.setup(mPath);
+                    TiffBitmapFactory.ImageInfo info = factory.setup(path2);
+                    String text = String.format("width==%s, height=%s, ori:%s", info.width, info.height, info.ori);
+                    System.out.println(text);
+                    mInfoTextView.setText(text);
+                    mInfoTextView.setVisibility(View.VISIBLE);
                 }
-                bitmap = factory.decodePath(mPath);
+                bitmap = factory.decodePath(path2);
                 mImageView.setImageBitmap(bitmap);
                 isSetBitmap = false;
             } else if (id == R.id.recycle_button) {
