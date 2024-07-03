@@ -12,7 +12,6 @@ LOCAL_SRC_FILES := \
     NativeExceptions.cpp \
     NativeTiffBitmapFactory.cpp \
 
-
 #libtiff库代码所在路径
 TIFF_C_LIB_PATH := \
     $(LOCAL_PATH)/../tiff/libtiff
@@ -21,8 +20,7 @@ LOCAL_C_INCLUDES := \
     $(TIFF_C_LIB_PATH) \
     $(TIFF_C_LIB_PATH)/tiff_config_headers/$(TARGET_ARCH_ABI)
 
-LOCAL_MODULE := libtiff_image_jni
-
+LOCAL_MODULE := libtiff_image
 
 #链接系统内置的库
 #liblog.so
@@ -32,8 +30,6 @@ LOCAL_LDLIBS := \
     -ljnigraphics
 
 LOCAL_CFLAGS := -DANDROID_NDK
-LOCAL_LDFLAGS +=-ljnigraphics
-
 LOCAL_STATIC_LIBRARIES := \
     libtiff
 

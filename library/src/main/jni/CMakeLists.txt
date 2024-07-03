@@ -4,7 +4,7 @@ project("tiff")
 set(MY_ROOT "${PROJECT_SOURCE_DIR}/../jni/tiff/")
 set(ANDROID_ROOT "${PROJECT_SOURCE_DIR}/../jni")
 
-add_library(tiff_image_jni SHARED
+add_library(tiff_image SHARED
         ${ANDROID_ROOT}/imagedecode/TiffImage.cpp
         ${ANDROID_ROOT}/imagedecode/JNIHelpers.cpp
         ${ANDROID_ROOT}/imagedecode/TiffImage_jni.cpp
@@ -118,11 +118,11 @@ target_compile_definitions(tiff PRIVATE -DHAS_WCHAR -DHAVE_WCHAR_H -DHAVE_MBSTAT
 target_compile_definitions(tiff PRIVATE -DUNIX)
 
 
-#tiff_image_jni Android
-target_include_directories(tiff_image_jni PUBLIC ${MY_ROOT}/libtiff/)
+#tiff_image Android
+target_include_directories(tiff_image PUBLIC ${MY_ROOT}/libtiff/)
 
-target_compile_definitions(tiff_image_jni PRIVATE -DORION_FOR_ANDROID)
-target_compile_options(tiff_image_jni PRIVATE -fexceptions -frtti)
+target_compile_definitions(tiff_image PRIVATE -DORION_FOR_ANDROID)
+target_compile_options(tiff_image PRIVATE -fexceptions -frtti)
 
 
-target_link_libraries(tiff_image_jni tiff jpeg -lm -llog -ljnigraphics)
+target_link_libraries(tiff_image tiff jpeg -lm -llog -ljnigraphics)

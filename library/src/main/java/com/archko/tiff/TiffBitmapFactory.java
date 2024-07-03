@@ -1,26 +1,23 @@
-package org.beyka.tiffbitmapfactory;
+package com.archko.tiff;
 
 import android.graphics.Bitmap;
 import android.util.Log;
 
-import com.mcs.library.LibraryLoader;
-
-import org.beyka.tiffbitmapfactory.exceptions.CantOpenFileException;
-import org.beyka.tiffbitmapfactory.exceptions.DecodeTiffException;
-import org.beyka.tiffbitmapfactory.exceptions.NotEnoughtMemoryException;
+import com.archko.tiff.exceptions.CantOpenFileException;
+import com.archko.tiff.exceptions.DecodeTiffException;
+import com.archko.tiff.exceptions.NotEnoughtMemoryException;
 
 import java.io.File;
 
 /**
  * Created by alexeyba on 7/17/15.
+ * modified by archko on 3/7/2024.
  */
 public class TiffBitmapFactory {
 
     public long mNativeContext = 1; // accessed by native methods
 
     static {
-        //System.loadLibrary("tiff");
-        //System.loadLibrary("tifffactory");
         LibraryLoader.load();
     }
 
@@ -251,8 +248,6 @@ public class TiffBitmapFactory {
         Log.i("THREAD", "setup path " + path);
         nativeSetup(path, new Options(), null);
     }
-
-    public native void accessInstanceFiled(JNIFieldClass mJniFieldClass);
 
     //private static native void nativeSetup(int fd, Options options, IProgressListener listener);
 

@@ -1,4 +1,4 @@
-package org.beyka.tiffbitmapfactory;
+package com.mcs.library;
 
 /**
  * @author: archko 2024/7/3 :13:41

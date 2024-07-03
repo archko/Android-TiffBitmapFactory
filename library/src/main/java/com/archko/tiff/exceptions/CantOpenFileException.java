@@ -1,4 +1,4 @@
-package org.beyka.tiffbitmapfactory.exceptions;
+package com.archko.tiff.exceptions;
 
 /**
  * Created by alexeyba on 09.11.15.

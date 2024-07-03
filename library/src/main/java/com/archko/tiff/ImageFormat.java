@@ -1,4 +1,4 @@
-package org.beyka.tiffbitmapfactory;
+package com.archko.tiff;
 
 /**
  * Supported image formats

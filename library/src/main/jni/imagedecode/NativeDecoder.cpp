@@ -38,8 +38,8 @@ NativeDecoder::NativeDecoder(JNIEnv *e, jclass c, jint fd, jobject opts, jobject
     image = NULL;
 
     jBitmapOptionsClass = env->FindClass(
-            "org/beyka/tiffbitmapfactory/TiffBitmapFactory$Options");
-    jIProgressListenerClass = env->FindClass("org/beyka/tiffbitmapfactory/IProgressListener");
+            "com/archko/tiff/TiffBitmapFactory$Options");
+    jIProgressListenerClass = env->FindClass("com/archko/tiff/IProgressListener");
     jThreadClass = env->FindClass("java/lang/Thread");
 }
 
@@ -69,8 +69,8 @@ NativeDecoder::NativeDecoder(JNIEnv *e, jclass c, jstring path, jobject opts, jo
     image = NULL;
 
     jBitmapOptionsClass = env->FindClass(
-            "org/beyka/tiffbitmapfactory/TiffBitmapFactory$Options");
-    jIProgressListenerClass = env->FindClass("org/beyka/tiffbitmapfactory/IProgressListener");
+            "com/archko/tiff/TiffBitmapFactory$Options");
+    jIProgressListenerClass = env->FindClass("com/archko/tiff/IProgressListener");
     jThreadClass = env->FindClass("java/lang/Thread");
 }
 
@@ -109,7 +109,7 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
     optionsObject = opts;
     listenerObject = listener;
     jBitmapOptionsClass = env->FindClass(
-            "org/beyka/tiffbitmapfactory/TiffBitmapFactory$Options");
+            "com/archko/tiff/TiffBitmapFactory$Options");
 
     //init signal handler for catch SIGSEGV error that could be raised in libtiff
     struct sigaction act;
@@ -176,7 +176,7 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
 
     jfieldID gOptions_PreferedConfigFieldID = env->GetFieldID(jBitmapOptionsClass,
                                                               "inPreferredConfig",
-                                                              "Lorg/beyka/tiffbitmapfactory/TiffBitmapFactory$ImageConfig;");
+                                                              "Lcom/archko/tiff/TiffBitmapFactory$ImageConfig;");
     jobject config = env->GetObjectField(optionsObject, gOptions_PreferedConfigFieldID);
 
     //if (inAvailableMemory > 0) {
@@ -186,9 +186,9 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
     if (config == NULL) {
         LOGI("config is NULL, creating default options");
         jclass bitmapConfig = env->FindClass(
-                "org/beyka/tiffbitmapfactory/TiffBitmapFactory$ImageConfig");
+                "com/archko/tiff/TiffBitmapFactory$ImageConfig");
         jfieldID argb8888FieldID = env->GetStaticFieldID(bitmapConfig, "ARGB_8888",
-                                                         "Lorg/beyka/tiffbitmapfactory/TiffBitmapFactory$ImageConfig;");
+                                                         "Lcom/archko/tiff/TiffBitmapFactory$ImageConfig;");
         config = env->GetStaticObjectField(bitmapConfig, argb8888FieldID);
         env->DeleteLocalRef(bitmapConfig);
     }
@@ -196,7 +196,7 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
     env->DeleteLocalRef(config);
 
     jfieldID gOptions_DecodeAreaFieldId = env->GetFieldID(jBitmapOptionsClass, "inDecodeArea",
-                                                          "Lorg/beyka/tiffbitmapfactory/DecodeArea;");
+                                                          "Lcom/archko/tiff/DecodeArea;");
     jobject decodeArea = env->GetObjectField(optionsObject, gOptions_DecodeAreaFieldId);
 
     //if directory number < 0 set it to 0
@@ -242,7 +242,7 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
     //Read decode bounds if exists
     if (decodeArea) {
         LOGI("Decode bounds present");
-        jclass decodeAreaClass = env->FindClass("org/beyka/tiffbitmapfactory/DecodeArea");
+        jclass decodeAreaClass = env->FindClass("com/archko/tiff/DecodeArea");
         jfieldID xFieldID = env->GetFieldID(decodeAreaClass, "x", "I");
         jfieldID yFieldID = env->GetFieldID(decodeAreaClass, "y", "I");
         jfieldID widthFieldID = env->GetFieldID(decodeAreaClass, "width", "I");
@@ -320,7 +320,7 @@ jobject NativeDecoder::createBitmap(int inSampleSize, int directoryNumber) {
     jint configInt = ARGB_8888;
     if (preferedConfig) {
         jclass configClass = env->FindClass(
-                "org/beyka/tiffbitmapfactory/TiffBitmapFactory$ImageConfig");
+                "com/archko/tiff/TiffBitmapFactory$ImageConfig");
         jfieldID ordinalFieldID = env->GetFieldID(configClass, "ordinal", "I");
         configInt = env->GetIntField(preferedConfig, ordinalFieldID);
         env->DeleteLocalRef(configClass);
@@ -3384,7 +3384,7 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
         origorientation = ORIENTATION_TOPLEFT;
     }
     jclass gOptions_ImageOrientationClass = env->FindClass(
-            "org/beyka/tiffbitmapfactory/Orientation");
+            "com/archko/tiff/Orientation");
     jfieldID gOptions_ImageOrientationFieldId = NULL;
     bool flipHW = false;
     LOGI("Orientation:%d", origorientation);
@@ -3392,46 +3392,46 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
         case ORIENTATION_TOPLEFT:
             gOptions_ImageOrientationFieldId = env->GetStaticFieldID(gOptions_ImageOrientationClass,
                                                                      "TOP_LEFT",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
             break;
         case ORIENTATION_TOPRIGHT:
             gOptions_ImageOrientationFieldId = env->GetStaticFieldID(gOptions_ImageOrientationClass,
                                                                      "TOP_RIGHT",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
             break;
         case ORIENTATION_BOTRIGHT:
             gOptions_ImageOrientationFieldId = env->GetStaticFieldID(gOptions_ImageOrientationClass,
                                                                      "BOT_RIGHT",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
             break;
         case ORIENTATION_BOTLEFT:
             gOptions_ImageOrientationFieldId = env->GetStaticFieldID(gOptions_ImageOrientationClass,
                                                                      "BOT_LEFT",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
             break;
         case ORIENTATION_LEFTTOP:
             flipHW = true;
             gOptions_ImageOrientationFieldId = env->GetStaticFieldID(gOptions_ImageOrientationClass,
                                                                      "LEFT_TOP",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
             break;
         case ORIENTATION_RIGHTTOP:
             flipHW = true;
             gOptions_ImageOrientationFieldId = env->GetStaticFieldID(gOptions_ImageOrientationClass,
                                                                      "RIGHT_TOP",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
             break;
         case ORIENTATION_RIGHTBOT:
             flipHW = true;
             gOptions_ImageOrientationFieldId = env->GetStaticFieldID(gOptions_ImageOrientationClass,
                                                                      "RIGHT_BOT",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
             break;
         case ORIENTATION_LEFTBOT:
             flipHW = true;
             gOptions_ImageOrientationFieldId = env->GetStaticFieldID(gOptions_ImageOrientationClass,
                                                                      "LEFT_BOT",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
             break;
     }
     if (gOptions_ImageOrientationFieldId != NULL) {
@@ -3442,7 +3442,7 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
         //Set outImageOrientation field to options object
         jfieldID gOptions_outImageOrientationField = env->GetFieldID(jBitmapOptionsClass,
                                                                      "outImageOrientation",
-                                                                     "Lorg/beyka/tiffbitmapfactory/Orientation;");
+                                                                     "Lcom/archko/tiff/Orientation;");
         env->SetObjectField(optionsObject, gOptions_outImageOrientationField,
                             gOptions_ImageOrientationObj);
     }
@@ -3468,24 +3468,24 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
     TIFFGetField(image, TIFFTAG_RESOLUTIONUNIT, &resunit);
     //LOGI("resunit:%d", resunit);
     jclass gOptions_ResolutionUnitClass = env->FindClass(
-            "org/beyka/tiffbitmapfactory/ResolutionUnit");
+            "com/archko/tiff/ResolutionUnit");
     jfieldID gOptions_ResolutionUnitFieldId = NULL;
     switch (resunit) {
         case RESUNIT_INCH:
             gOptions_ResolutionUnitFieldId = env->GetStaticFieldID(gOptions_ResolutionUnitClass,
                                                                    "INCH",
-                                                                   "Lorg/beyka/tiffbitmapfactory/ResolutionUnit;");
+                                                                   "Lcom/archko/tiff/ResolutionUnit;");
             break;
         case RESUNIT_CENTIMETER:
             gOptions_ResolutionUnitFieldId = env->GetStaticFieldID(gOptions_ResolutionUnitClass,
                                                                    "CENTIMETER",
-                                                                   "Lorg/beyka/tiffbitmapfactory/ResolutionUnit;");
+                                                                   "Lcom/archko/tiff/ResolutionUnit;");
             break;
         case RESUNIT_NONE:
         default:
             gOptions_ResolutionUnitFieldId = env->GetStaticFieldID(gOptions_ResolutionUnitClass,
                                                                    "NONE",
-                                                                   "Lorg/beyka/tiffbitmapfactory/ResolutionUnit;");
+                                                                   "Lcom/archko/tiff/ResolutionUnit;");
             break;
     }
     if (gOptions_ResolutionUnitFieldId != NULL) {
@@ -3496,7 +3496,7 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
         //Set resolution unit field to options object
         jfieldID gOptions_outResUnitField = env->GetFieldID(jBitmapOptionsClass,
                                                             "outResolutionUnit",
-                                                            "Lorg/beyka/tiffbitmapfactory/ResolutionUnit;");
+                                                            "Lcom/archko/tiff/ResolutionUnit;");
         env->SetObjectField(optionsObject, gOptions_outResUnitField,
                             gOptions_ResolutionUnitObj);
     }
@@ -3505,18 +3505,18 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
     int planarConfig = 0;
     TIFFGetField(image, TIFFTAG_PLANARCONFIG, &planarConfig);
     LOGI("planar config:%d", planarConfig);
-    jclass gOptions_PlanarConfigClass = env->FindClass("org/beyka/tiffbitmapfactory/PlanarConfig");
+    jclass gOptions_PlanarConfigClass = env->FindClass("com/archko/tiff/PlanarConfig");
     jfieldID gOptions_PlanarConfigFieldId = NULL;
     switch (planarConfig) {
         case PLANARCONFIG_CONTIG:
             gOptions_PlanarConfigFieldId = env->GetStaticFieldID(gOptions_PlanarConfigClass,
                                                                  "CONTIG",
-                                                                 "Lorg/beyka/tiffbitmapfactory/PlanarConfig;");
+                                                                 "Lcom/archko/tiff/PlanarConfig;");
             break;
         case PLANARCONFIG_SEPARATE:
             gOptions_PlanarConfigFieldId = env->GetStaticFieldID(gOptions_PlanarConfigClass,
                                                                  "SEPARATE",
-                                                                 "Lorg/beyka/tiffbitmapfactory/PlanarConfig;");
+                                                                 "Lcom/archko/tiff/PlanarConfig;");
             break;
     }
     if (gOptions_PlanarConfigFieldId != NULL) {
@@ -3526,7 +3526,7 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
 
         jfieldID gOptions_outPlanarConfigField = env->GetFieldID(jBitmapOptionsClass,
                                                                  "outPlanarConfig",
-                                                                 "Lorg/beyka/tiffbitmapfactory/PlanarConfig;");
+                                                                 "Lcom/archko/tiff/PlanarConfig;");
         env->SetObjectField(optionsObject, gOptions_outPlanarConfigField,
                             gOptions_PlanarConfigObj);
     }
@@ -3536,58 +3536,58 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
     LOGI("compression:%d", origcompressionscheme);
 
     jclass gOptions_ImageCompressionClass = env->FindClass(
-            "org/beyka/tiffbitmapfactory/CompressionScheme");
+            "com/archko/tiff/CompressionScheme");
     jfieldID gOptions_ImageCompressionFieldId = NULL;
     switch (origcompressionscheme) {
         case COMPRESSION_NONE:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "NONE",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         case COMPRESSION_CCITTRLE:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "CCITTRLE",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         case COMPRESSION_CCITTFAX3:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "CCITTFAX3",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         case COMPRESSION_CCITTFAX4:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "CCITTFAX4",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         case COMPRESSION_LZW:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "LZW",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         case COMPRESSION_JPEG:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "JPEG",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         case COMPRESSION_PACKBITS:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "PACKBITS",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         case COMPRESSION_DEFLATE:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "DEFLATE",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         case COMPRESSION_ADOBE_DEFLATE:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "ADOBE_DEFLATE",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
             break;
         default:
             gOptions_ImageCompressionFieldId = env->GetStaticFieldID(gOptions_ImageCompressionClass,
                                                                      "OTHER",
-                                                                     "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                     "Lcom/archko/tiff/CompressionScheme;");
 
     }
     if (gOptions_ImageCompressionFieldId != NULL) {
@@ -3598,7 +3598,7 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
         //Set outImageOrientation field to options object
         jfieldID gOptions_outCompressionSchemeField = env->GetFieldID(jBitmapOptionsClass,
                                                                       "outCompressionScheme",
-                                                                      "Lorg/beyka/tiffbitmapfactory/CompressionScheme;");
+                                                                      "Lcom/archko/tiff/CompressionScheme;");
         env->SetObjectField(optionsObject, gOptions_outCompressionSchemeField,
                             gOptions_ImageCompressionObj);
     }
@@ -3687,62 +3687,62 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
     int photometric = 0;
     TIFFGetField(image, TIFFTAG_PHOTOMETRIC, &photometric);
     LOGI("photometric:%d", photometric);
-    jclass gOptions_PhotometricClass = env->FindClass("org/beyka/tiffbitmapfactory/Photometric");
+    jclass gOptions_PhotometricClass = env->FindClass("com/archko/tiff/Photometric");
     jfieldID gOptions_PhotometricFieldId = NULL;
     switch (photometric) {
         case PHOTOMETRIC_MINISWHITE:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "MINISWHITE",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
             break;
         case PHOTOMETRIC_MINISBLACK:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "MINISBLACK",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_RGB:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "RGB",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_PALETTE:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "PALETTE",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_MASK:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "MASK",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_SEPARATED:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "SEPARATED",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_YCBCR:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "YCBCR",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_CIELAB:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "CIELAB",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_ICCLAB:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "ICCLAB",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_ITULAB:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "ITULAB",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_LOGL:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "LOGL",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         case PHOTOMETRIC_LOGLUV:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "LOGLUV",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         default:
             gOptions_PhotometricFieldId = env->GetStaticFieldID(gOptions_PhotometricClass,
                                                                 "OTHER",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
     }
     if (gOptions_PhotometricFieldId != NULL) {
         jobject gOptions_PhotometricObj = env->GetStaticObjectField(
@@ -3751,7 +3751,7 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
 
         jfieldID gOptions_outPhotometricField = env->GetFieldID(jBitmapOptionsClass,
                                                                 "outPhotometric",
-                                                                "Lorg/beyka/tiffbitmapfactory/Photometric;");
+                                                                "Lcom/archko/tiff/Photometric;");
         env->SetObjectField(optionsObject, gOptions_outPhotometricField,
                             gOptions_PhotometricObj);
     }
@@ -3760,18 +3760,18 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
     int fillOrder = 0;
     TIFFGetField(image, TIFFTAG_FILLORDER, &fillOrder);
     LOGI("fill Order:%d", fillOrder);
-    jclass gOptions_FillOrderClass = env->FindClass("org/beyka/tiffbitmapfactory/FillOrder");
+    jclass gOptions_FillOrderClass = env->FindClass("com/archko/tiff/FillOrder");
     jfieldID gOptions_FillOrderFieldId = NULL;
     switch (fillOrder) {
         case FILLORDER_MSB2LSB:
             gOptions_FillOrderFieldId = env->GetStaticFieldID(gOptions_FillOrderClass,
                                                               "MSB2LSB",
-                                                              "Lorg/beyka/tiffbitmapfactory/FillOrder;");
+                                                              "Lcom/archko/tiff/FillOrder;");
             break;
         case PLANARCONFIG_SEPARATE:
             gOptions_FillOrderFieldId = env->GetStaticFieldID(gOptions_FillOrderClass,
                                                               "LSB2MSB",
-                                                              "Lorg/beyka/tiffbitmapfactory/FillOrder;");
+                                                              "Lcom/archko/tiff/FillOrder;");
             break;
     }
     if (gOptions_FillOrderFieldId != NULL) {
@@ -3781,7 +3781,7 @@ void NativeDecoder::writeDataToOptions(int directoryNumber) {
 
         jfieldID gOptions_outFillOrderField = env->GetFieldID(jBitmapOptionsClass,
                                                               "outFillOrder",
-                                                              "Lorg/beyka/tiffbitmapfactory/FillOrder;");
+                                                              "Lcom/archko/tiff/FillOrder;");
         env->SetObjectField(optionsObject, gOptions_outFillOrderField,
                             gOptions_FillOrderObj);
     }

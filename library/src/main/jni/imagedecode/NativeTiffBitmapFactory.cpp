@@ -12,7 +12,7 @@ extern "C" {
 #include <errno.h>
 #include <string.h>
 
-#define JNI_TIFF_FN(A) Java_org_beyka_tiffbitmapfactory_ ## A
+#define JNI_TIFF_FN(A) Java_com_archko_tiff_ ## A
 
 struct fields_t {
     jfieldID context;
@@ -105,6 +105,7 @@ void JNI_TIFF_FN(TiffBitmapFactory_nativeSetup)
     env->DeleteLocalRef(clazz);
 }
 
+// ================= test jni =================
 //将jstring转换成char *
 char *jstringToNative(JNIEnv *env, jstring jstr) {
     if ((env)->ExceptionCheck() == JNI_TRUE || jstr == NULL) {
@@ -159,13 +160,13 @@ jstring nativeTojstring(JNIEnv *env, const char *str) {
     return (jstring) (env)->NewObject(strClass, ctorID, bytes, encoding);
 }
 
-void JNI_TIFF_FN(TiffBitmapFactory_accessInstanceFiled)
+/*void JNI_TIFF_FN(TiffBitmapFactory_accessInstanceFiled)
         (JNIEnv *env, jobject thiz, jobject object_in) {
     jclass clazz;//JNIFieldClass类引用
     jfieldID mString_fieldID;//JNIFieldClass类对象变量mString属性ID
     jfieldID mInt_fieldID;//JNIFieldClass类对象变量mInt属性ID
 
-    /******获取JNIFieldClass类实例变量mString的值并修改********/
+    *//******获取JNIFieldClass类实例变量mString的值并修改********//*
     //1.通过JNIFieldClass类实例object_in获取Class的引用
     clazz = env->GetObjectClass(object_in);
     if (clazz == NULL) {
@@ -195,7 +196,7 @@ void JNI_TIFF_FN(TiffBitmapFactory_accessInstanceFiled)
     //5.释放局部引用
     env->DeleteLocalRef(j_string);
 
-    /******获取JNIFieldClass类实例int型变量mInt的值并修改********/
+    *//******获取JNIFieldClass类实例int型变量mInt的值并修改********//*
     //6.获取JNIFieldClass类实例int型变量mString的属性ID
     mInt_fieldID = env->GetFieldID(clazz, "mInt", "I");
     if (mInt_fieldID == NULL) {
@@ -224,7 +225,7 @@ void JNI_TIFF_FN(TiffBitmapFactory_accessInstanceFiled)
 
     //9.删除局部引用,即对JNIFieldClass的类引用
     env->DeleteLocalRef(clazz);
-}
+}*/
 
 
 #ifdef __cplusplus

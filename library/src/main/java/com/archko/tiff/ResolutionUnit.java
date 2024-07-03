@@ -1,4 +1,4 @@
-package org.beyka.tiffbitmapfactory;
+package com.archko.tiff;
 
 /**
  * Created by beyka on 13.3.17.

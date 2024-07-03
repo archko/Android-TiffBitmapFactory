@@ -13,7 +13,7 @@ void throw_not_enought_memory_exception(JNIEnv *env, int available, int need) {
     jclass exClass;
     jmethodID exConstructorID;
     jobject exObj;
-    const char *className = "org/beyka/tiffbitmapfactory/exceptions/NotEnoughtMemoryException";
+    const char *className = "com/archko/tiff/exceptions/NotEnoughtMemoryException";
 
     exClass = env->FindClass(className);
 
@@ -28,7 +28,7 @@ void throw_decode_file_exception(JNIEnv *env, jstring str, jstring additionalInf
     jclass exClass;
     jmethodID exConstructorID;
     jobject exObj;
-    const char *className = "org/beyka/tiffbitmapfactory/exceptions/DecodeTiffException";
+    const char *className = "com/archko/tiff/exceptions/DecodeTiffException";
 
     exClass = env->FindClass(className);
 
@@ -44,7 +44,7 @@ void throw_decode_file_exception_fd(JNIEnv *env, jint fd, jstring additionalInfo
     jclass exClass;
     jmethodID exConstructorID;
     jobject exObj;
-    const char *className = "org/beyka/tiffbitmapfactory/exceptions/DecodeTiffException";
+    const char *className = "com/archko/tiff/exceptions/DecodeTiffException";
 
     exClass = env->FindClass(className);
 
@@ -59,7 +59,7 @@ void throw_cant_open_file_exception(JNIEnv *env, jstring str) {
     jclass exClass;
     jmethodID exConstructorID;
     jobject exObj;
-    const char *className = "org/beyka/tiffbitmapfactory/exceptions/CantOpenFileException";
+    const char *className = "com/archko/tiff/exceptions/CantOpenFileException";
 
     exClass = env->FindClass(className);
 
@@ -74,7 +74,7 @@ void throw_cant_open_file_exception_fd(JNIEnv *env, jint fd) {
     jclass exClass;
     jmethodID exConstructorID;
     jobject exObj;
-    const char *className = "org/beyka/tiffbitmapfactory/exceptions/CantOpenFileException";
+    const char *className = "com/archko/tiff/exceptions/CantOpenFileException";
 
     exClass = env->FindClass(className);
 

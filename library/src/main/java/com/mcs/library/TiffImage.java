@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.util.Log;
 import android.util.TypedValue;
 
+import com.archko.tiff.LibraryLoader;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -22,7 +24,6 @@ public class TiffImage {
     private static boolean DEBUG = true;
 
     static {
-        //System.loadLibrary("tiff_image_jni");
         LibraryLoader.load();
     }
 

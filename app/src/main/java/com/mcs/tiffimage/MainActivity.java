@@ -19,7 +19,7 @@ import android.widget.TextView;
 
 import com.mcs.library.TiffImage;
 
-import org.beyka.tiffbitmapfactory.TiffBitmapFactory;
+import com.archko.tiff.TiffBitmapFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -203,9 +203,9 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.factory_button) {
                 if (null == factory) {
                     factory = new TiffBitmapFactory();
-                    factory.setup(path3);
+                    factory.setup(path2);
                 }
-                bitmap = factory.decodePath(path3);
+                bitmap = factory.decodePath(path2);
                 mImageView.setImageBitmap(bitmap);
                 isSetBitmap = false;
             } else if (id == R.id.recycle_button) {
