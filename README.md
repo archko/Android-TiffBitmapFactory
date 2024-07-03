@@ -12,6 +12,7 @@ If you use proguard add this to you config file:
 - remove convert
 - remove saver
 - reuse decoder, it's very usefull,if a tiff is very large, a decoder can decode a tile once, but old factory is static and can't be reused.
+- change origBufferSize to long, large tiff exceed int.max value, some tiff is large than 2gb.
 
 thanks TiffImage:https://github.com/m4coding/TiffImage, another decode tiff repo, update tiff to 4.0.5
 # TiffImage
