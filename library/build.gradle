@@ -12,6 +12,12 @@ android {
     }
     buildTypes {
         release {
+            jniDebuggable false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            jniDebuggable true
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -21,6 +27,12 @@ android {
             path 'src/main/jni/Android.mk'
         }
     }
+
+    //externalNativeBuild {
+    //    cmake {
+    //        path "src/main/jni/CMakeLists.txt"
+    //    }
+    //}
 }
 
 dependencies {

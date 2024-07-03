@@ -22,7 +22,8 @@ public class TiffImage {
     private static boolean DEBUG = true;
 
     static {
-        System.loadLibrary("tiff_image_jni");
+        //System.loadLibrary("tiff_image_jni");
+        LibraryLoader.load();
     }
 
     private long mNativeContext; // accessed by native methods

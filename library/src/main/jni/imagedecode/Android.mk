@@ -8,7 +8,10 @@ LOCAL_SRC_FILES := \
     TiffImage_jni.cpp \
     JavaInputStreamAdaptor.cpp \
     TiffInputStream.cpp \
-    tiffstream.cpp
+    NativeDecoder.cpp \
+    NativeExceptions.cpp \
+    NativeTiffBitmapFactory.cpp \
+
 
 #libtiff库代码所在路径
 TIFF_C_LIB_PATH := \
@@ -25,7 +28,11 @@ LOCAL_MODULE := libtiff_image_jni
 #liblog.so
 LOCAL_LDLIBS := \
     -llog  \
-    -lz
+    -lz \
+    -ljnigraphics
+
+LOCAL_CFLAGS := -DANDROID_NDK
+LOCAL_LDFLAGS +=-ljnigraphics
 
 LOCAL_STATIC_LIBRARIES := \
     libtiff

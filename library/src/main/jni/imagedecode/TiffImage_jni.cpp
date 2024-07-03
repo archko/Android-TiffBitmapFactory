@@ -28,7 +28,7 @@ static void setTiffImage(JNIEnv *env, jobject thiz, long tiffImage) {
     env->SetLongField(thiz, fields.context, tiffImage);
 }
 
-static jobject getImageInfoJNI(JNIEnv *env, jobject thiz, jstring path) {
+static jobject getImageInfoJNI(JNIEnv *env, jclass thiz, jstring path) {
 
     if (!path) {
         jniThrowException(env, ILLEGAL_ARGUMENT_EXEPTION, "Null pointer");

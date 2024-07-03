@@ -1,8 +1,15 @@
 package com.mcs.tiffimage;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
@@ -11,6 +18,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.mcs.library.TiffImage;
+
+import org.beyka.tiffbitmapfactory.TiffBitmapFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,6 +31,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,11 +47,35 @@ public class MainActivity extends AppCompatActivity {
     private String mPath, mStringPath;
     private Button mInfoButton;
     private Button mStreamButton, mResButton, mAssetsButton;
+    private Button factoryButton, recycleButton;
     private TextView mInfoTextView;
+    private String path1 = "/sdcard/DCIM/院本清明上河图.清.陈枚等合绘.65500X1970像素.台湾故宫博物院藏.jpg";
+    private String path2 = "/sdcard/DCIM/院本清明上河图.清.陈枚等合绘.67704X2036像素.台湾故宫博物院藏[Dujin.org].tif";
+    private String path3 = "/sdcard/DCIM/清院本 清明上河图(一版)陈枚、孙祜、金昆、戴洪、程志道绢本 台北故宫35.6x1152.tif";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                        .setData(Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                } else {
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            1);
+                }
+            }
+        }
+
         initView();
         initData();
     }
@@ -59,6 +94,11 @@ public class MainActivity extends AppCompatActivity {
         mStreamButton.setOnClickListener(mOnClickListener);
         mResButton.setOnClickListener(mOnClickListener);
         mAssetsButton.setOnClickListener(mOnClickListener);
+
+        factoryButton = findViewById(R.id.factory_button);
+        factoryButton.setOnClickListener(mOnClickListener);
+        recycleButton = findViewById(R.id.recycle_button);
+        recycleButton.setOnClickListener(mOnClickListener);
     }
 
     private void initData() {
@@ -118,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    TiffBitmapFactory factory = null;
     private View.OnClickListener mOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -159,6 +200,19 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 isSetBitmap = true;
+            } else if (id == R.id.factory_button) {
+                if (null == factory) {
+                    factory = new TiffBitmapFactory();
+                    factory.setup(path3);
+                }
+                bitmap = factory.decodePath(path3);
+                mImageView.setImageBitmap(bitmap);
+                isSetBitmap = false;
+            } else if (id == R.id.recycle_button) {
+                factory.nativeCloseFd();
+                factory = null;
+
+                mImageView.setImageBitmap(null);
             }
 
             if (isSetBitmap) {
@@ -171,9 +225,9 @@ public class MainActivity extends AppCompatActivity {
                         Formatter.formatFileSize(MainActivity.this, tiffImage.getSize()) + "; byte'length==" +
                         Formatter.formatFileSize(MainActivity.this, bytes.length));
             } else {
-                Log.d(TAG, "tiffImage decode width==" + tiffImage.getWidth() + "; height=="
-                        + tiffImage.getHeight() + "; size==" +
-                        Formatter.formatFileSize(MainActivity.this, tiffImage.getSize()));
+                //Log.d(TAG, "tiffImage decode width==" + tiffImage.getWidth() + "; height=="
+                //        + tiffImage.getHeight() + "; size==" +
+                //        Formatter.formatFileSize(MainActivity.this, tiffImage.getSize()));
             }
 
             if (tiffImage != null) {
