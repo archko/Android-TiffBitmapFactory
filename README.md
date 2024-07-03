@@ -51,6 +51,11 @@ setupFd(),current is not avaliable
 thanks TiffImage: https://github.com/m4coding/TiffImage, another decode tiff repo, update tiff to
 4.0.5
 
+# decode step
+- setup and decode width,height,orientation,author,software,eg.don't decode bitmap.only writeDataToOptions()
+- decode tile or full image: resolve option and decode bitmap tile.
+not support multithread, because decode params are shared on decoder.
+
 # TiffImage
 
 decode tiff image for android
