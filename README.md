@@ -1,3 +1,19 @@
+# fork from Android-TiffBitmapFactory
+TiffBitmapFactory is an Android library that allows opening and saving images in *.tif format (See [Wikipedia](https://en.wikipedia.org/wiki/Tagged_Image_File_Format)) on Android devices.
+[Android-TiffBitmapFactory] (https://github.com/Beyka/Android-TiffBitmapFactory)
+
+# Proguard
+If you use proguard add this to you config file:
+```Gradle
+-keep class org.beyka.tiffbitmapfactory.**{ *; }
+```
+
+# updates
+- remove convert
+- remove saver
+- reuse decoder, it's very usefull,if a tiff is very large, a decoder can decode a tile once, but old factory is static and can't be reused.
+
+thanks TiffImage:https://github.com/m4coding/TiffImage, another decode tiff repo
 # TiffImage
 decode tiff image for android
 
