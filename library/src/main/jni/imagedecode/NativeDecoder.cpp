@@ -14,10 +14,8 @@ jmp_buf NativeDecoder::general_buf;
 
 //Constructor for decoding from file descriptor
 NativeDecoder::NativeDecoder(JNIEnv *e, jclass c, jint fd, jobject opts, jobject listener) {
-
     decodingMode = DECODE_MODE_FILE_DESCRIPTOR;
 
-    //availableMemory = 8000 * 8000 * 4; // use 244Mb restriction for decoding full image
     env = e;
     clazz = c;
     optionsObject = opts;
@@ -47,7 +45,6 @@ NativeDecoder::NativeDecoder(JNIEnv *e, jclass c, jint fd, jobject opts, jobject
 NativeDecoder::NativeDecoder(JNIEnv *e, jclass c, jstring path, jobject opts, jobject listener) {
     decodingMode = DECODE_MODE_FILE_PATH;
 
-    //availableMemory = 8000 * 8000 * 4; // use 244Mb restriction for decoding full image
     env = e;
     clazz = c;
     optionsObject = opts;
@@ -167,20 +164,10 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
     jint inDirectoryNumber = env->GetIntField(optionsObject, gOptions_DirectoryCountFieldID);
     LOGI("param directoryCount:%d", inDirectoryNumber);
 
-    //jfieldID gOptions_AvailableMemoryFieldID = env->GetFieldID(jBitmapOptionsClass,
-    //                                                           "inAvailableMemory",
-    //                                                           "J");
-    //unsigned long inAvailableMemory = env->GetLongField(optionsObject,
-    //                                                    gOptions_AvailableMemoryFieldID);
-
     jfieldID gOptions_PreferedConfigFieldID = env->GetFieldID(jBitmapOptionsClass,
                                                               "inPreferredConfig",
                                                               "Lcom/archko/tiff/TiffBitmapFactory$ImageConfig;");
     jobject config = env->GetObjectField(optionsObject, gOptions_PreferedConfigFieldID);
-
-    //if (inAvailableMemory > 0) {
-    //    availableMemory = inAvailableMemory;
-    //}
 
     if (config == NULL) {
         LOGI("config is NULL, creating default options");
@@ -315,7 +302,7 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
 }
 
 jobject NativeDecoder::createBitmap(int inSampleSize, int directoryNumber) {
-//Read Config from options. Use ordinal field from ImageConfig class
+    //Read Config from options. Use ordinal field from ImageConfig class
     jint configInt = ARGB_8888;
     if (preferedConfig) {
         jclass configClass = env->FindClass(
@@ -491,7 +478,6 @@ jobject NativeDecoder::createBitmap(int inSampleSize, int directoryNumber) {
 
 jint *
 NativeDecoder::getSampledRasterFromStrip(int inSampleSize, int *bitmapwidth, int *bitmapheight) {
-
     //init signal handler for catch SIGSEGV error that could be raised in libtiff
     struct sigaction act;
     memset(&act, 0, sizeof(act));
@@ -518,20 +504,6 @@ NativeDecoder::getSampledRasterFromStrip(int inSampleSize, int *bitmapwidth, int
     int rowPerStrip = -1;
     TIFFGetField(image, TIFFTAG_ROWSPERSTRIP, &rowPerStrip);
     LOGI("rowsperstrip:%d", rowPerStrip);
-
-    unsigned long estimateMem = 0;
-    estimateMem += (sizeof(jint) * pixelsBufferSize); //buffer for decoded pixels
-    estimateMem += (origwidth * sizeof(uint32)); //work line for rotate strip
-    estimateMem += (origwidth * rowPerStrip * sizeof(uint32) * 2); //current and next strips
-    estimateMem += (sizeof(jint) * origwidth *
-                    2); //bottom and top lines for reading pixel(matrixBottomLine, matrixTopLine)
-    LOGI("estimateMem:%d", estimateMem);
-    //if (estimateMem > availableMemory) {
-    //    if (throwException) {
-    //        throw_not_enought_memory_exception(env, availableMemory, estimateMem);
-    //    }
-    //    return NULL;
-    //}
 
     pixels = (jint *) malloc(sizeof(jint) * pixelsBufferSize);
     if (pixels == NULL) {
@@ -966,7 +938,6 @@ NativeDecoder::getSampledRasterFromStrip(int inSampleSize, int *bitmapwidth, int
 
 jint *NativeDecoder::getSampledRasterFromStripWithBounds(int inSampleSize, int *bitmapwidth,
                                                          int *bitmapheight) {
-
     //init signal handler for catch SIGSEGV error that could be raised in libtiff
     struct sigaction act;
     memset(&act, 0, sizeof(act));
@@ -993,22 +964,6 @@ jint *NativeDecoder::getSampledRasterFromStripWithBounds(int inSampleSize, int *
     int rowPerStrip = -1;
     TIFFGetField(image, TIFFTAG_ROWSPERSTRIP, &rowPerStrip);
     LOGI("rowsperstrip%d", rowPerStrip);
-
-    unsigned long estimateMem = 0;
-    estimateMem += (sizeof(jint) * pixelsBufferSize); //temp buffer for decoded pixels
-    estimateMem += (sizeof(jint) * (boundWidth / inSampleSize) *
-                    (boundHeight / inSampleSize)); //final buffer that will store original image
-    estimateMem += (origwidth * sizeof(uint32)); //work line for rotate strip
-    estimateMem += (origwidth * rowPerStrip * sizeof(uint32) * 2); //current and next strips
-    estimateMem += (sizeof(jint) * origwidth *
-                    2); //bottom and top lines for reading pixel(matrixBottomLine, matrixTopLine)
-    LOGI("estimateMem:%d", estimateMem);
-    //if (estimateMem > availableMemory) {
-    //    if (throwException) {
-    //        throw_not_enought_memory_exception(env, availableMemory, estimateMem);
-    //    }
-    //    return NULL;
-    //}
 
     progressTotal = pixelsBufferSize + (boundWidth / inSampleSize) * (boundHeight / inSampleSize);
     sendProgress(0, progressTotal);
@@ -1460,17 +1415,6 @@ jint *NativeDecoder::getSampledRasterFromStripWithBounds(int inSampleSize, int *
 
     uint32 tmpPixelBufferSize = (boundWidth / inSampleSize) * (boundHeight / inSampleSize);
 
-    estimateMem = (sizeof(jint) * pixelsBufferSize); //temp buffer for decoded pixels
-    estimateMem += (sizeof(jint) *
-                    tmpPixelBufferSize); //final buffer that will store original image
-    LOGI("estimateMem:%d", estimateMem);
-    //if (estimateMem > availableMemory) {
-    //    if (throwException) {
-    //        throw_not_enought_memory_exception(env, availableMemory, estimateMem);
-    //    }
-    //    return NULL;
-    //}
-
     jint *tmpPixels = (jint *) malloc(sizeof(jint) * tmpPixelBufferSize);
     uint32 startPosX = 0;
 
@@ -1541,7 +1485,6 @@ NativeDecoder::rotateTileLinesHorizontal(uint32 tileHeight, uint32 tileWidth, ui
 
 jint *
 NativeDecoder::getSampledRasterFromTile(int inSampleSize, int *bitmapwidth, int *bitmapheight) {
-
     //init signal handler for catch SIGSEGV error that could be raised in libtiff
     struct sigaction act;
     memset(&act, 0, sizeof(act));
@@ -1560,19 +1503,6 @@ NativeDecoder::getSampledRasterFromTile(int inSampleSize, int *bitmapwidth, int 
     uint32 tileWidth = 0, tileHeight = 0;
     TIFFGetField(image, TIFFTAG_TILEWIDTH, &tileWidth);
     TIFFGetField(image, TIFFTAG_TILEWIDTH, &tileHeight);
-
-    unsigned long estimateMem = 0;
-    estimateMem += (sizeof(jint) * pixelsBufferSize); //buffer for decoded pixels
-    estimateMem +=
-            (tileWidth * tileHeight * sizeof(uint32)) * 3; //current, left and right tiles buffers
-    estimateMem += (tileWidth * sizeof(uint32)); //work line for rotate tile
-    LOGI("estimateMem:%d", estimateMem);
-    //if (estimateMem > availableMemory) {
-    //    if (throwException) {
-    //        throw_not_enought_memory_exception(env, availableMemory, estimateMem);
-    //    }
-    //    return NULL;
-    //}
 
     pixels = (jint *) malloc(sizeof(jint) * pixelsBufferSize);
     if (pixels == NULL) {
@@ -2053,7 +1983,6 @@ NativeDecoder::getSampledRasterFromTile(int inSampleSize, int *bitmapwidth, int 
 
 jint *NativeDecoder::getSampledRasterFromTileWithBounds(int inSampleSize, int *bitmapwidth,
                                                         int *bitmapheight) {
-
     //init signal handler for catch SIGSEGV error that could be raised in libtiff
     struct sigaction act;
     memset(&act, 0, sizeof(act));
@@ -2084,19 +2013,6 @@ jint *NativeDecoder::getSampledRasterFromTileWithBounds(int inSampleSize, int *b
     *bitmapheight = /*boundHeight*/
             (lastTileY - firstTileY) * tileHeight / inSampleSize;//origheight / inSampleSize;
     uint32 pixelsBufferSize = *bitmapwidth * *bitmapheight;
-
-    unsigned long estimateMem = 0;
-    estimateMem += (sizeof(jint) * pixelsBufferSize); //buffer for decoded pixels
-    estimateMem +=
-            (tileWidth * tileHeight * sizeof(uint32)) * 3; //current, left and right tiles buffers
-    estimateMem += (tileWidth * sizeof(uint32)); //work line for rotate tile
-    LOGI("estimateMem:%d", estimateMem);
-    //if (estimateMem > availableMemory) {
-    //    if (throwException) {
-    //        throw_not_enought_memory_exception(env, availableMemory, estimateMem);
-    //    }
-    //    return NULL;
-    //}
 
     pixels = (jint *) malloc(sizeof(jint) * pixelsBufferSize);
     if (pixels == NULL) {
@@ -2530,16 +2446,6 @@ jint *NativeDecoder::getSampledRasterFromTileWithBounds(int inSampleSize, int *b
     //Copy necessary pixels to new array if orientation <=4
     uint32 tmpPixelBufferSize = (boundWidth / inSampleSize) * (boundHeight / inSampleSize);
 
-    estimateMem = (sizeof(jint) * pixelsBufferSize); //buffer for decoded pixels
-    estimateMem += (sizeof(jint) * tmpPixelBufferSize); //finall buffer
-    LOGI("estimateMem:%d", estimateMem);
-    //if (estimateMem > availableMemory) {
-    //    if (throwException) {
-    //        throw_not_enought_memory_exception(env, availableMemory, estimateMem);
-    //    }
-    //    return NULL;
-    //}
-
     if (origorientation <= 4) {
 
         jint *tmpPixels = (jint *) malloc(sizeof(jint) * tmpPixelBufferSize);
@@ -2639,20 +2545,6 @@ NativeDecoder::getSampledRasterFromImage(int inSampleSize, int *bitmapwidth, int
     *bitmapheight = origheight / inSampleSize;
     //buffer size for creating scaled image;
     uint32 pixelsBufferSize = *bitmapwidth * *bitmapheight * sizeof(jint);
-
-    /**Estimate usage of memory for decoding*/
-    unsigned long estimateMem = origBufferSize;//origBufferSize - size of decoded RGBA image
-    if (inSampleSize > 1) {
-        estimateMem += pixelsBufferSize; //if inSmapleSize greater than 1 we need aditional vevory for scaled image
-    }
-    LOGI("estimateMem:%d, width:%d,h:%d", estimateMem, origwidth, origheight);
-
-    //if (estimateMem > availableMemory) {
-    //    if (throwException) {
-    //        throw_not_enought_memory_exception(env, availableMemory, estimateMem);
-    //    }
-    //    return NULL;
-    //}
 
     unsigned int *origBuffer = NULL;
 
@@ -2886,20 +2778,6 @@ jint *NativeDecoder::getSampledRasterFromImageWithBounds(int inSampleSize, int *
     *bitmapheight = boundHeight / inSampleSize;//origheight / inSampleSize;
     //buffer size for creating scaled image;
     uint32 pixelsBufferSize = *bitmapwidth * *bitmapheight * sizeof(jint);
-
-    /**Estimate usage of memory for decoding*/
-    unsigned long estimateMem = origBufferSize;//origBufferSize - size of decoded RGBA image
-    //if (inSampleSize > 1) {
-    estimateMem += pixelsBufferSize; //if inSmapleSize greater than 1 we need aditional vevory for scaled image
-    //}
-    LOGI("estimateMem:%d", estimateMem);
-
-    //if (estimateMem > availableMemory) {
-    //    if (throwException) {
-    //        throw_not_enought_memory_exception(env, availableMemory, estimateMem);
-    //    }
-    //    return NULL;
-    //}
 
     unsigned int *origBuffer = NULL;
     jint *pixels = NULL;
@@ -3940,10 +3818,3 @@ void NativeDecoder::throwCantOpenFileException() {
         throw_cant_open_file_exception_fd(env, jFd);
     }
 }
-
-
-
-
-
-
-

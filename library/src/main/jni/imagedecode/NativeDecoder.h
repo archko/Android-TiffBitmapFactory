@@ -73,7 +73,6 @@ private:
     jint boundWidth;
     jint boundHeight;
     char hasBounds;
-    //unsigned long availableMemory;
 
     //methods
     int getDyrectoryCount();
