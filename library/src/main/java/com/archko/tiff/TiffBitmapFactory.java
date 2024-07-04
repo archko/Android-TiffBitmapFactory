@@ -559,5 +559,14 @@ public class TiffBitmapFactory {
             this.height = height;
             this.ori = ori;
         }
+
+        @Override
+        public String toString() {
+            return "ImageInfo{" +
+                    "width=" + width +
+                    ", height=" + height +
+                    ", ori=" + ori +
+                    '}';
+        }
     }
 }

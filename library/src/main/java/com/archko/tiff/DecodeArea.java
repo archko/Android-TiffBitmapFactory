@@ -22,4 +22,14 @@ public class DecodeArea {
         this.width = width;
         this.height = height;
     }
+
+    @Override
+    public String toString() {
+        return "DecodeArea{" +
+                "x=" + x +
+                ", y=" + y +
+                ", width=" + width +
+                ", height=" + height +
+                '}';
+    }
 }

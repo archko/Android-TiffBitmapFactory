@@ -189,16 +189,16 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
     if (inDirectoryNumber < 0) inDirectoryNumber = 0;
 
     //Open tiff file
-    LOGI("nativeTiffOpen:%s", jPath);
+    //LOGI("nativeTiffOpen:%s", jPath);
     const char *strPath = NULL;
-    if (decodingMode == DECODE_MODE_FILE_DESCRIPTOR) {
-        if (image == nullptr) {
+    if (image == nullptr) {
+        if (decodingMode == DECODE_MODE_FILE_DESCRIPTOR) {
             image = TIFFFdOpen(jFd, "", "r");
-        }
-    } else if (decodingMode == DECODE_MODE_FILE_PATH) {
-        strPath = env->GetStringUTFChars(jPath, 0);
-        if (image == nullptr) {
+            LOGI("Tiff is open");
+        } else if (decodingMode == DECODE_MODE_FILE_PATH) {
+            strPath = env->GetStringUTFChars(jPath, 0);
             image = TIFFOpen(strPath, "r");
+            LOGI("Tiff is open");
         }
     }
 
@@ -219,9 +219,8 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
             env->ReleaseStringUTFChars(jPath, strPath);
         }
     }
-    LOGI("Tiff is open");
 
-    TIFFSetDirectory(image, inDirectoryNumber);
+    //TIFFSetDirectory(image, inDirectoryNumber);
     TIFFGetField(image, TIFFTAG_IMAGEWIDTH, &origwidth);
     TIFFGetField(image, TIFFTAG_IMAGELENGTH, &origheight);
 
@@ -281,7 +280,9 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
             return NULL;
         }
 
-        LOGI("Decode X:%d, y:%d, w:%d, h:%d", boundX, boundY, boundWidth, boundHeight);
+        LOGI("Decode sampleSize:%d, X:%d, y:%d, w:%d, h:%d",
+             inSampleSize, boundX, boundY,
+             boundWidth, boundHeight);
 
         hasBounds = 1;
         env->DeleteLocalRef(decodeAreaClass);
@@ -963,7 +964,7 @@ jint *NativeDecoder::getSampledRasterFromStripWithBounds(int inSampleSize, int *
     LOGI("strip size:%d, stripMax:%d", stripSize, stripMax);
     int rowPerStrip = -1;
     TIFFGetField(image, TIFFTAG_ROWSPERSTRIP, &rowPerStrip);
-    LOGI("rowsperstrip%d", rowPerStrip);
+    LOGI("rowsperstrip:%d", rowPerStrip);
 
     progressTotal = pixelsBufferSize + (boundWidth / inSampleSize) * (boundHeight / inSampleSize);
     sendProgress(0, progressTotal);
