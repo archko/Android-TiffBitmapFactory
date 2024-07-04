@@ -29,26 +29,17 @@ include_directories(${PROJECT_SOURCE_DIR}/libtiff
                     ${PROJECT_SOURCE_DIR}/port
                     ${CMAKE_CURRENT_BINARY_DIR})
 
-add_executable(bmp2tiff bmp2tiff.c)
-target_link_libraries(bmp2tiff tiff port)
-
 add_executable(fax2ps fax2ps.c)
 target_link_libraries(fax2ps tiff port)
 
 add_executable(fax2tiff fax2tiff.c)
 target_link_libraries(fax2tiff tiff port)
 
-add_executable(gif2tiff gif2tiff.c)
-target_link_libraries(gif2tiff tiff port)
-
 add_executable(pal2rgb pal2rgb.c)
 target_link_libraries(pal2rgb tiff port)
 
 add_executable(ppm2tiff ppm2tiff.c)
 target_link_libraries(ppm2tiff tiff port)
-
-add_executable(ras2tiff ras2tiff.c rasterfile.h)
-target_link_libraries(ras2tiff tiff port)
 
 add_executable(raw2tiff raw2tiff.c)
 target_link_libraries(raw2tiff tiff port)
@@ -98,16 +89,11 @@ target_link_libraries(tiffset tiff port)
 add_executable(tiffsplit tiffsplit.c)
 target_link_libraries(tiffsplit tiff port)
 
-install(TARGETS bmp2tiff
-                fax2ps
+install(TARGETS fax2ps
                 fax2tiff
-                gif2tiff
                 pal2rgb
                 ppm2tiff
-                ras2tiff
                 raw2tiff
-                rgb2ycbcr
-                thumbnail
                 tiff2bw
                 tiff2pdf
                 tiff2ps
@@ -132,8 +118,35 @@ if(HAVE_OPENGL)
   endif()
 
   add_executable(tiffgt tiffgt.c)
-  target_link_libraries(tiffgt tiff ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
+  target_link_libraries(tiffgt tiff port ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
 
   install(TARGETS tiffgt
           RUNTIME DESTINATION "${CMAKE_INSTALL_FULL_BINDIR}")
+endif()
+
+if(WEBP_SUPPORT AND EMSCRIPTEN)
+  # Emscripten is pretty finnicky about linker flags.
+  # It needs --shared-memory if and only if atomics or bulk-memory is used.
+  foreach(target fax2ps
+                 fax2tiff
+                 pal2rgb
+                 ppm2tiff
+                 raw2tiff
+                 rgb2ycbcr
+                 thumbnail
+                 tiff2bw
+                 tiff2pdf
+                 tiff2ps
+                 tiff2rgba
+                 tiffcmp
+                 tiffcp
+                 tiffcrop
+                 tiffdither
+                 tiffdump
+                 tiffinfo
+                 tiffmedian
+                 tiffset
+                 tiffsplit)
+    target_link_options(${target} PUBLIC "-Wl,--shared-memory")
+  endforeach()
 endif()

@@ -1,5 +1,3 @@
-/* $Id: libport.h,v 1.5 2015-08-19 02:31:04 bfriesen Exp $ */
-
 /*
  * Copyright (c) 2009 Frank Warmerdam
  *
@@ -26,6 +24,10 @@
 #ifndef _LIBPORT_
 #define	_LIBPORT_
 
+#if defined(HAVE_CONFIG_H)
+#  include <tif_config.h>
+#endif
+
 int getopt(int argc, char * const argv[], const char *optstring);
 extern   char *optarg;
 extern   int opterr;
@@ -38,8 +40,17 @@ int strcasecmp(const char *s1, const char *s2);
 #  define HAVE_GETOPT 1
 #endif
 
-#if 0
+#if !defined(HAVE_STRTOL)
+long strtol(const char *nptr, char **endptr, int base);
+#endif
+#if !defined(HAVE_STRTOLL)
+long long strtoll(const char *nptr, char **endptr, int base);
+#endif
+#if !defined(HAVE_STRTOUL)
 unsigned long strtoul(const char *nptr, char **endptr, int base);
+#endif
+#if !defined(HAVE_STRTOULL)
+unsigned long long strtoull(const char *nptr, char **endptr, int base);
 #endif
 
 #if 0

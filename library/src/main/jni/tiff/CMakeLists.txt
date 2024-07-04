@@ -23,10 +23,10 @@
 # LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 # OF THIS SOFTWARE.
 
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 2.8.11) # b/c of use of BUILD_INTERFACE generator expression
 
-# Default policy is from 3.0.0
-cmake_policy(VERSION 3.0.0)
+# Default policy is from 2.8.9
+cmake_policy(VERSION 2.8.9)
 # Set MacOSX @rpath usage globally.
 if (POLICY CMP0020)
   cmake_policy(SET CMP0020 NEW)
@@ -42,13 +42,40 @@ if (POLICY CMP0054)
   cmake_policy(SET CMP0054 NEW)
 endif(POLICY CMP0054)
 
+# Read version information from configure.ac.
+FILE(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/configure.ac" configure REGEX "^LIBTIFF_.*=")
+foreach(line ${configure})
+  foreach(var LIBTIFF_MAJOR_VERSION LIBTIFF_MINOR_VERSION LIBTIFF_MICRO_VERSION LIBTIFF_ALPHA_VERSION
+          LIBTIFF_CURRENT LIBTIFF_REVISION LIBTIFF_AGE)
+    if(NOT ${var} AND line MATCHES "^${var}=(.*)")
+      set(${var} "${CMAKE_MATCH_1}")
+      break()
+    endif()
+  endforeach()
+endforeach()
+
+math(EXPR SO_MAJOR "${LIBTIFF_CURRENT} - ${LIBTIFF_AGE}")
+set(SO_MINOR "${LIBTIFF_AGE}")
+set(SO_REVISION "${LIBTIFF_REVISION}")
+
+message(STATUS "Building tiff version ${LIBTIFF_MAJOR_VERSION}.${LIBTIFF_MINOR_VERSION}.${LIBTIFF_MICRO_VERSION}${LIBTIFF_ALPHA_VERSION}")
+message(STATUS "libtiff library version ${SO_MAJOR}.${SO_MINOR}.${SO_REVISION}")
+
+set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries")
+
 # Project version
-project(tiff VERSION 4.0.5 LANGUAGES C)
+project(tiff C)
+set(VERSION "${LIBTIFF_MAJOR_VERSION}.${LIBTIFF_MINOR_VERSION}.${LIBTIFF_MICRO_VERSION}")
+set(tiff_VERSION "${VERSION}")
+set(tiff_VERSION_MAJOR "${LIBTIFF_MAJOR_VERSION}")
+set(tiff_VERSION_MINOR "${LIBTIFF_MINOR_VERSION}")
+set(tiff_VERSION_PATCH "${LIBTIFF_MICRO_VERSION}")
+
 # the other tiff_VERSION_* variables are set automatically
-set(tiff_VERSION_ALPHA beta)
+set(tiff_VERSION_ALPHA "${LIBTIFF_ALPHA_VERSION}")
 # Library version (unlike libtool's baroque scheme, WYSIWYG here)
-set(SO_COMPATVERSION 5)
-set(SO_VERSION 5.2.2)
+set(SO_COMPATVERSION "${SO_MAJOR}")
+set(SO_VERSION "${SO_MAJOR}.${SO_MINOR}.${SO_REVISION}")
 
 # For autotools header compatibility
 set(PACKAGE_NAME "LibTIFF Software")
@@ -61,8 +88,9 @@ include(GNUInstallDirs)
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
 include(CheckIncludeFile)
+include(CheckLibraryExists)
 include(CheckTypeSize)
-include(CheckFunctionExists)
+include(CheckSymbolExists)
 enable_testing()
 
 macro(current_date var)
@@ -175,16 +203,15 @@ else()
 endif()
 
 # Find libm, if available
-find_library(M_LIBRARY m)
+if(NOT MINGW)
+  find_library(M_LIBRARY m)
+endif()
 
 check_include_file(assert.h    HAVE_ASSERT_H)
 check_include_file(dlfcn.h     HAVE_DLFCN_H)
 check_include_file(fcntl.h     HAVE_FCNTL_H)
 check_include_file(inttypes.h  HAVE_INTTYPES_H)
 check_include_file(io.h        HAVE_IO_H)
-check_include_file(limits.h    HAVE_LIMITS_H)
-check_include_file(malloc.h    HAVE_MALLOC_H)
-check_include_file(memory.h    HAVE_MEMORY_H)
 check_include_file(search.h    HAVE_SEARCH_H)
 check_include_file(stdint.h    HAVE_STDINT_H)
 check_include_file(string.h    HAVE_STRING_H)
@@ -240,8 +267,6 @@ int main(void){
 
 # Check type sizes
 # NOTE: Could be replaced with C99 <stdint.h>
-check_type_size("signed short" SIZEOF_SIGNED_SHORT)
-check_type_size("unsigned short" SIZEOF_UNSIGNED_SHORT)
 check_type_size("signed int" SIZEOF_SIGNED_INT)
 check_type_size("unsigned int" SIZEOF_UNSIGNED_INT)
 check_type_size("signed long" SIZEOF_SIGNED_LONG)
@@ -311,29 +336,21 @@ endif()
 if(SIZEOF_UNSIGNED_INT EQUAL SIZEOF_SIZE_T)
   set(TIFF_SIZE_T "unsigned int")
   set(TIFF_SIZE_FORMAT "%u")
+  set(TIFF_SSIZE_T "signed int")
+  set(TIFF_SSIZE_FORMAT "%d")
 elseif(SIZEOF_UNSIGNED_LONG EQUAL SIZEOF_SIZE_T)
   set(TIFF_SIZE_T "unsigned long")
   set(TIFF_SIZE_FORMAT "%lu")
-elseif(SIZEOF_UNSIGNED_LONG_LONG EQUAL SIZEOF_SIZE_T)
-  set(TIFF_SIZE_T "unsigned long")
-  if (MINGW)
-    set(TIFF_SIZE_FORMAT "%I64u")
-  else()
-    set(TIFF_SIZE_FORMAT "%llu")
-  endif()
-endif()
-
-if(SIZEOF_SIGNED_INT EQUAL SIZEOF_UNSIGNED_CHAR_P)
-  set(TIFF_SSIZE_T "signed int")
-  set(TIFF_SSIZE_FORMAT "%d")
-elseif(SIZEOF_SIGNED_LONG EQUAL SIZEOF_UNSIGNED_CHAR_P)
   set(TIFF_SSIZE_T "signed long")
   set(TIFF_SSIZE_FORMAT "%ld")
-elseif(SIZEOF_SIGNED_LONG_LONG EQUAL SIZEOF_UNSIGNED_CHAR_P)
+elseif(SIZEOF_UNSIGNED_LONG_LONG EQUAL SIZEOF_SIZE_T)
+  set(TIFF_SIZE_T "unsigned long long")
   set(TIFF_SSIZE_T "signed long long")
   if (MINGW)
+    set(TIFF_SIZE_FORMAT "%I64u")
     set(TIFF_SSIZE_FORMAT "%I64d")
   else()
+    set(TIFF_SIZE_FORMAT "%llu")
     set(TIFF_SSIZE_FORMAT "%lld")
   endif()
 endif()
@@ -357,86 +374,46 @@ endif()
 #              TIFF_SSIZE_T TIFF_SSIZE_FORMAT
 #              TIFF_PTRDIFF_T TIFF_PTRDIFF_FORMAT)
 
-# Nonstandard int types
-check_type_size(INT8 int8)
-set(HAVE_INT8 ${INT8})
-check_type_size(INT16 int16)
-set(HAVE_INT16 ${INT16})
-check_type_size(INT32 int32)
-set(HAVE_INT32 ${INT32})
-
-# Check functions
-set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
-set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${M_LIBRARY})
-check_function_exists(floor HAVE_FLOOR)
-check_function_exists(pow   HAVE_POW)
-check_function_exists(sqrt  HAVE_SQRT)
-set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
-
-check_function_exists(isascii    HAVE_ISASCII)
-check_function_exists(memmove    HAVE_MEMMOVE)
-check_function_exists(memset     HAVE_MEMSET)
-check_function_exists(mmap       HAVE_MMAP)
-check_function_exists(setmode    HAVE_SETMODE)
-check_function_exists(strcasecmp HAVE_STRCASECMP)
-check_function_exists(strchr     HAVE_STRCHR)
-check_function_exists(strrchr    HAVE_STRRCHR)
-check_function_exists(strstr     HAVE_STRSTR)
-check_function_exists(strtol     HAVE_STRTOL)
-check_function_exists(strtol     HAVE_STRTOUL)
-check_function_exists(strtoull   HAVE_STRTOULL)
-check_function_exists(getopt     HAVE_GETOPT)
-check_function_exists(lfind      HAVE_LFIND)
-
-# May be inlined, so check it compiles:
-check_c_source_compiles("
-#include <stdio.h>
-int main(void) {
-  char buf[10];
-  snprintf(buf, 10, \"Test %d\", 1);
-  return 0;
-}"
-  HAVE_SNPRINTF)
+check_symbol_exists(mmap "sys/mman.h" HAVE_MMAP)
+check_symbol_exists(setmode "unistd.h" HAVE_SETMODE)
+check_symbol_exists(snprintf "stdio.h" HAVE_SNPRINTF)
+check_symbol_exists(strcasecmp "strings.h" HAVE_STRCASECMP)
+check_symbol_exists(strtol "stdlib.h" HAVE_STRTOL)
+check_symbol_exists(strtoll "stdlib.h" HAVE_STRTOLL)
+check_symbol_exists(strtoul "stdlib.h" HAVE_STRTOUL)
+check_symbol_exists(strtoull "stdlib.h" HAVE_STRTOULL)
+check_symbol_exists(getopt "unistd.h;stdio.h" HAVE_GETOPT)
+check_symbol_exists(lfind "search.h" HAVE_LFIND)
 
 if(NOT HAVE_SNPRINTF)
   add_definitions(-DNEED_LIBPORT)
 endif()
 
 # CPU bit order
-set(fillorder FILLORDER_MSB2LSB)
+set(HOST_FILLORDER FILLORDER_MSB2LSB)
 if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "i.*86.*" OR
    CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "amd64.*" OR
+   # AMD64 on Windows
+   CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "AMD64" OR
    CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64.*")
-  set(fillorder FILLORDER_LSB2MSB)
+  set(HOST_FILLORDER FILLORDER_LSB2MSB)
 endif()
-set(HOST_FILLORDER ${fillorder} CACHE STRING "Native CPU bit order")
-mark_as_advanced(HOST_FILLORDER)
 
 # CPU endianness
 include(TestBigEndian)
-test_big_endian(bigendian)
-if (bigendian)
-  set(bigendian ON)
-else()
-  set(bigendian OFF)
-endif()
-set(HOST_BIG_ENDIAN ${bigendian} CACHE STRING "Native CPU bit order")
-mark_as_advanced(HOST_BIG_ENDIAN)
-if (HOST_BIG_ENDIAN)
-  set(HOST_BIG_ENDIAN 1)
-else()
-  set(HOST_BIG_ENDIAN 0)
+test_big_endian(HOST_BIG_ENDIAN)
+if(HOST_BIG_ENDIAN)
+  add_definitions(-DWORDS_BIGENDIAN)
 endif()
 
 # IEEE floating point
-set(HAVE_IEEEFP 1 CACHE STRING "IEEE floating point is available")
-mark_as_advanced(HAVE_IEEEFP)
+set(HAVE_IEEEFP 1)
 
 report_values(CMAKE_HOST_SYSTEM_PROCESSOR HOST_FILLORDER
               HOST_BIG_ENDIAN HAVE_IEEEFP)
 
 # Large file support
-if (UNIX)
+if (UNIX OR MINGW)
   # This might not catch every possibility catered for by
   # AC_SYS_LARGEFILE.
   add_definitions(-D_FILE_OFFSET_BITS=64)
@@ -480,6 +457,33 @@ if(ZLIB_FOUND)
   set(ZLIB_SUPPORT 1)
 endif()
 set(ZIP_SUPPORT ${ZLIB_SUPPORT})
+
+
+# libdeflate
+option(libdeflate "use libdeflate (optional for faster Deflate support, still requires zlib)" ON)
+if (libdeflate)
+  set(DEFLATE_FOUND 0)
+  find_path(DEFLATE_INCLUDE_DIR libdeflate.h)
+  set(DEFLATE_NAMES ${DEFLATE_NAMES} deflate)
+  find_library(DEFLATE_LIBRARY NAMES ${DEFLATE_NAMES})
+  if (DEFLATE_INCLUDE_DIR AND DEFLATE_LIBRARY)
+    set(DEFLATE_FOUND 1)
+    set(DEFLATE_LIBRARIES ${DEFLATE_LIBRARY})
+  endif()
+endif()
+set(LIBDEFLATE_SUPPORT FALSE)
+if(DEFLATE_FOUND)
+  set(LIBDEFLATE_SUPPORT TRUE)
+endif()
+
+if(LIBDEFLATE_SUPPORT AND NOT ZIP_SUPPORT)
+    message(WARNING "libdeflate available but zlib is not. libdeflate cannot be used")
+    set(LIBDEFLATE_SUPPORT FALSE)
+endif()
+
+set(LIBDEFLATE_SUPPORT ${LIBDEFLATE_SUPPORT})
+
+
 # Option for Pixar log-format algorithm
 
 # Pixar log format
@@ -529,12 +533,9 @@ else()
   set(JBIG_FOUND FALSE)
 endif()
 
-set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
 set(CMAKE_REQUIRED_INCLUDES_SAVE ${CMAKE_REQUIRED_INCLUDES})
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${JBIG_INCLUDE_DIR})
-set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${JBIG_LIBRARY})
-check_function_exists(jbg_newlen HAVE_JBG_NEWLEN)
-set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
+check_symbol_exists(jbg_newlen "jbig.h" HAVE_JBG_NEWLEN)
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_SAVE})
 
 # liblzma2
@@ -545,6 +546,42 @@ endif()
 set(LZMA_SUPPORT 0)
 if(LIBLZMA_FOUND)
   set(LZMA_SUPPORT 1)
+endif()
+
+# libzstd
+option(zstd "use libzstd (required for ZSTD compression)" ON)
+if (zstd)
+    find_path(ZSTD_INCLUDE_DIR zstd.h)
+    find_library(ZSTD_LIBRARY NAMES zstd)
+    if (ZSTD_INCLUDE_DIR AND ZSTD_LIBRARY)
+        check_library_exists ("${ZSTD_LIBRARY}" ZSTD_decompressStream "" ZSTD_RECENT_ENOUGH)
+        if (ZSTD_RECENT_ENOUGH)
+            set(ZSTD_FOUND TRUE)
+            set(ZSTD_LIBRARIES ${ZSTD_LIBRARY})
+            message(STATUS "Found ZSTD library: ${ZSTD_LIBRARY}")
+        else ()
+            message(WARNING "Found ZSTD library, but not recent enough. Use zstd >= 1.0")
+        endif ()
+    endif ()
+endif()
+set(ZSTD_SUPPORT 0)
+if(ZSTD_FOUND)
+  set(ZSTD_SUPPORT 1)
+endif()
+
+# libwebp
+option(webp "use libwebp (required for WEBP compression)" ON)
+if (webp)
+    find_path(WEBP_INCLUDE_DIR /webp/decode.h)
+    find_library(WEBP_LIBRARY NAMES webp)
+endif()
+set(WEBP_SUPPORT 0)
+set(WEBP_FOUND FALSE)
+if (WEBP_INCLUDE_DIR AND WEBP_LIBRARY)
+  set(WEBP_SUPPORT 1)
+  set(WEBP_FOUND TRUE)
+  set(WEBP_LIBRARIES ${WEBP_LIBRARY})
+  message(STATUS "Found WEBP library: ${WEBP_LIBRARY}")
 endif()
 
 # 8/12-bit jpeg mode
@@ -590,12 +627,8 @@ set(win32_io FALSE)
 if(WIN32)
   set(win32_io TRUE)
 endif()
-set(USE_WIN32_FILEIO ${win32_io} CACHE BOOL "Use win32 IO system (Microsoft Windows only)")
-if (USE_WIN32_FILEIO)
-  set(USE_WIN32_FILEIO TRUE)
-else()
-  set(USE_WIN32_FILEIO FALSE)
-endif()
+
+set(USE_WIN32_FILEIO ${win32_io})
 
 # Orthogonal features
 
@@ -612,7 +645,7 @@ if(strip-chopping)
 endif()
 
 # Defer loading of strip/tile offsets
-option(defer-strile-load "enable deferred strip/tile offset/size loading (experimental)" OFF)
+option(defer-strile-load "enable deferred strip/tile offset/size loading (also available at runtime with the 'D' flag of TIFFOpen())" OFF)
 set(DEFER_STRILE_LOAD ${defer-strile-load})
 
 # CHUNKY_STRIP_READ_SUPPORT
@@ -649,6 +682,9 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libtiff-4.pc
 if(ZLIB_INCLUDE_DIRS)
   list(APPEND TIFF_INCLUDES ${ZLIB_INCLUDE_DIRS})
 endif()
+if(DEFLATE_INCLUDE_DIR)
+  list(APPEND TIFF_INCLUDES ${DEFLATE_INCLUDE_DIR})
+endif()
 if(JPEG_INCLUDE_DIR)
   list(APPEND TIFF_INCLUDES ${JPEG_INCLUDE_DIR})
 endif()
@@ -661,14 +697,23 @@ endif()
 if(LIBLZMA_INCLUDE_DIRS)
   list(APPEND TIFF_INCLUDES ${LIBLZMA_INCLUDE_DIRS})
 endif()
+if(ZSTD_INCLUDE_DIR)
+  list(APPEND TIFF_INCLUDES ${ZSTD_INCLUDE_DIR})
+endif()
+if(WEBP_INCLUDE_DIR)
+  list(APPEND TIFF_INCLUDES ${WEBP_INCLUDE_DIR})
+endif()
 
 # Libraries required by libtiff
 set(TIFF_LIBRARY_DEPS)
-if(M_LIBRARY)
-  list(APPEND TIFF_LIBRARY_DEPS ${M_LIBRARY})
+if(NOT MINGW AND M_LIBRARY)
+  list(APPEND TIFF_LIBRARY_DEPS "m")
 endif()
 if(ZLIB_LIBRARIES)
   list(APPEND TIFF_LIBRARY_DEPS ${ZLIB_LIBRARIES})
+endif()
+if(DEFLATE_LIBRARIES)
+  list(APPEND TIFF_LIBRARY_DEPS ${DEFLATE_LIBRARIES})
 endif()
 if(JPEG_LIBRARIES)
   list(APPEND TIFF_LIBRARY_DEPS ${JPEG_LIBRARIES})
@@ -681,6 +726,12 @@ if(JBIG_LIBRARIES)
 endif()
 if(LIBLZMA_LIBRARIES)
   list(APPEND TIFF_LIBRARY_DEPS ${LIBLZMA_LIBRARIES})
+endif()
+if(ZSTD_LIBRARIES)
+  list(APPEND TIFF_LIBRARY_DEPS ${ZSTD_LIBRARIES})
+endif()
+if(WEBP_LIBRARIES)
+  list(APPEND TIFF_LIBRARY_DEPS ${WEBP_LIBRARIES})
 endif()
 
 #report_values(TIFF_INCLUDES TIFF_LIBRARY_DEPS)
@@ -704,6 +755,7 @@ message(STATUS "  Installation directory:             ${prefix}")
 message(STATUS "  Documentation directory:            ${LIBTIFF_DOCDIR}")
 message(STATUS "  C compiler:                         ${CMAKE_C_COMPILER}")
 message(STATUS "  C++ compiler:                       ${CMAKE_CXX_COMPILER}")
+message(STATUS "  Build shared libraries:             ${BUILD_SHARED_LIBS}")
 message(STATUS "  Enable linker symbol versioning:    ${HAVE_LD_VERSION_SCRIPT}")
 message(STATUS "  Support Microsoft Document Imaging: ${mdi}")
 message(STATUS "  Use win32 IO:                       ${USE_WIN32_FILEIO}")
@@ -718,12 +770,15 @@ message(STATUS "  LogLuv high dynamic range encoding: ${logluv}")
 message(STATUS "")
 message(STATUS " Support for external codecs:")
 message(STATUS "  ZLIB support:                       ${zlib} (requested) ${ZLIB_FOUND} (availability)")
+message(STATUS "  libdeflate support:                 ${libdeflate} (requested) ${LIBDEFLATE_SUPPORT} (availability)")
 message(STATUS "  Pixar log-format algorithm:         ${pixarlog} (requested) ${PIXARLOG_SUPPORT} (availability)")
 message(STATUS "  JPEG support:                       ${jpeg} (requested) ${JPEG_FOUND} (availability)")
 message(STATUS "  Old JPEG support:                   ${old-jpeg} (requested) ${JPEG_FOUND} (availability)")
 message(STATUS "  JPEG 8/12 bit dual mode:            ${jpeg12} (requested) ${JPEG12_FOUND} (availability)")
 message(STATUS "  ISO JBIG support:                   ${jbig} (requested) ${JBIG_FOUND} (availability)")
 message(STATUS "  LZMA2 support:                      ${lzma} (requested) ${LIBLZMA_FOUND} (availability)")
+message(STATUS "  ZSTD support:                       ${zstd} (requested) ${ZSTD_FOUND} (availability)")
+message(STATUS "  WEBP support:                       ${webp} (requested) ${WEBP_FOUND} (availability)")
 message(STATUS "")
 message(STATUS "  C++ support:                        ${cxx} (requested) ${CXX_SUPPORT} (availability)")
 message(STATUS "")

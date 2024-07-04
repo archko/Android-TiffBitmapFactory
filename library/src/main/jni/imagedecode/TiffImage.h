@@ -47,7 +47,7 @@ private:
     int height;
     JavaInputStreamAdaptor *javaInputStreamAdaptor;
     TiffInputStream *tiffInputStream;
-    TiffStream *tiffStream;
+    //TiffStream *tiffStream;
 
 };
 

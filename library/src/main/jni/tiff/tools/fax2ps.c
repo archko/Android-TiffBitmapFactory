@@ -1,5 +1,3 @@
-/* $Id: fax2ps.c,v 1.30 2015-08-19 02:31:04 bfriesen Exp $" */
-
 /*
  * Copyright (c) 1991-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -49,6 +47,13 @@
 
 #include "tiffiop.h"
 #include "tiffio.h"
+
+#ifndef EXIT_SUCCESS
+#define EXIT_SUCCESS  0
+#endif
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE  1
+#endif
 
 float	defxres = 204.;		/* default x resolution (pixels/inch) */
 float	defyres = 98.;		/* default y resolution (lines/inch) */
@@ -332,7 +337,7 @@ main(int argc, char** argv)
     int c, dowarnings = 0;		/* if 1, enable library warnings */
     TIFF* tif;
 
-    while ((c = getopt(argc, argv, "l:p:x:y:W:H:wS")) != -1)
+    while ((c = getopt(argc, argv, "l:p:x:y:W:H:wSh")) != -1)
 	switch (c) {
 	case 'H':		/* page height */
 	    pageHeight = (float)atof(optarg);
@@ -352,7 +357,7 @@ main(int argc, char** argv)
 	    if( pages == NULL )
 	    {
 		fprintf(stderr, "Out of memory\n");
-		exit(-1);
+		exit(EXIT_FAILURE);
 	    }
 	    pages[npages++] = pageNumber;
 	    break;
@@ -368,8 +373,10 @@ main(int argc, char** argv)
 	case 'l':
 	    maxline = atoi(optarg);
 	    break;
+	case 'h':
+	    usage(EXIT_SUCCESS);
 	case '?':
-	    usage(-1);
+	    usage(EXIT_FAILURE);
 	}
     if (npages > 0)
 	qsort(pages, npages, sizeof(uint16), pcompar);
@@ -393,13 +400,19 @@ main(int argc, char** argv)
 	fd = tmpfile();
 	if (fd == NULL) {
 	    fprintf(stderr, "Could not obtain temporary file.\n");
-	    exit(-2);
+	    exit(EXIT_FAILURE);
 	}
 #if defined(HAVE_SETMODE) && defined(O_BINARY)
 	setmode(fileno(stdin), O_BINARY);
 #endif
-	while ((n = read(fileno(stdin), buf, sizeof (buf))) > 0)
-	    write(fileno(fd), buf, n);
+	while ((n = read(fileno(stdin), buf, sizeof (buf))) > 0) {
+                if (write(fileno(fd), buf, n) != n) {
+                        fclose(fd);
+                        fprintf(stderr,
+                                "Could not copy stdin to temporary file.\n");
+                        exit(EXIT_FAILURE);
+                }
+        }
 	_TIFF_lseek_f(fileno(fd), 0, SEEK_SET);
 #if defined(_WIN32) && defined(USE_WIN32_FILEIO)
 	tif = TIFFFdOpen(_get_osfhandle(fileno(fd)), "temp", "r");
@@ -417,10 +430,10 @@ main(int argc, char** argv)
     printf("%%%%Pages: %u\n", totalPages);
     printf("%%%%EOF\n");
 
-    return (0);
+    return (EXIT_SUCCESS);
 }
 
-char* stuff[] = {
+const char* stuff[] = {
 "usage: fax2ps [options] [input.tif ...]",
 "where options are:",
 " -w            suppress warning messages",
@@ -437,13 +450,12 @@ NULL
 static void
 usage(int code)
 {
-	char buf[BUFSIZ];
 	int i;
+	FILE * out = (code == EXIT_SUCCESS) ? stdout : stderr;
 
-	setbuf(stderr, buf);
-        fprintf(stderr, "%s\n\n", TIFFGetVersion());
+        fprintf(out, "%s\n\n", TIFFGetVersion());
 	for (i = 0; stuff[i] != NULL; i++)
-		fprintf(stderr, "%s\n", stuff[i]);
+		fprintf(out, "%s\n", stuff[i]);
 	exit(code);
 }
 

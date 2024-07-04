@@ -93,8 +93,10 @@ set(tiff_SOURCES
   tif_tile.c
   tif_version.c
   tif_warning.c
+  tif_webp.c
   tif_write.c
-  tif_zip.c)
+  tif_zip.c
+  tif_zstd.c)
 
 set(tiffxx_HEADERS
   tiffio.hxx)
@@ -102,7 +104,7 @@ set(tiffxx_HEADERS
 set(tiffxx_SOURCES
   tif_stream.cxx)
 
-if(WIN32_IO)
+if(USE_WIN32_FILEIO)
   extra_dist(tif_unix.c)
   list(APPEND tiff_SOURCES tif_win32.c)
 else()
@@ -110,12 +112,14 @@ else()
   list(APPEND tiff_SOURCES tif_unix.c)
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}
-                    ${CMAKE_CURRENT_BINARY_DIR}
-                    ${TIFF_INCLUDES})
-
-add_library(tiff SHARED ${tiff_SOURCES} ${tiff_HEADERS} ${nodist_tiff_HEADERS}
+add_library(tiff ${tiff_SOURCES} ${tiff_HEADERS} ${nodist_tiff_HEADERS}
             ${tiff_port_SOURCES} libtiff.def)
+target_include_directories(tiff
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        ${TIFF_INCLUDES}
+)
 target_link_libraries(tiff ${TIFF_LIBRARY_DEPS})
 set_target_properties(tiff PROPERTIES SOVERSION ${SO_COMPATVERSION})
 if(NOT CYGWIN)
@@ -130,15 +134,7 @@ if(HAVE_LD_VERSION_SCRIPT)
                         "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/libtiff.map")
 endif()
 
-add_library(tiff_static STATIC ${tiff_SOURCES} ${tiff_HEADERS})
-target_link_libraries(tiff_static ${TIFF_LIBRARY_DEPS} port)
-if (NOT WIN32)
-  # Windows static and DLL import libraries both use .lib so the
-  # static lib can't use the same name as the DLL
-  set_target_properties(tiff_static PROPERTIES OUTPUT_NAME tiff)
-endif()
-
-install(TARGETS tiff tiff_static
+install(TARGETS tiff
         RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})
@@ -146,8 +142,8 @@ install(TARGETS tiff tiff_static
 install(FILES ${tiff_HEADERS} ${nodist_tiff_HEADERS}
         DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
 
-if(cxx)
-  add_library(tiffxx SHARED ${tiffxx_SOURCES} ${tiffxx_HEADERS})
+if(CXX_SUPPORT)
+  add_library(tiffxx ${tiffxx_SOURCES} ${tiffxx_HEADERS})
   target_link_libraries(tiffxx tiff)
   set_target_properties(tiffxx PROPERTIES SOVERSION ${SO_COMPATVERSION})
   if(NOT CYGWIN)
@@ -162,15 +158,7 @@ if(cxx)
                           "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/libtiffxx.map")
   endif()
 
-  add_library(tiffxx_static STATIC ${tiffxx_SOURCES} ${tiffxx_HEADERS})
-  target_link_libraries(tiffxx_static tiff_staticport)
- if (NOT WIN32)
-    # Windows static and DLL import libraries both use .lib so the
-    # static lib can't use the same name as the DLL
-    set_target_properties(tiffxx_static PROPERTIES OUTPUT_NAME tiffxx)
-  endif()
-
-  install(TARGETS tiffxx tiffxx_static
+  install(TARGETS tiffxx
           RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
           LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})

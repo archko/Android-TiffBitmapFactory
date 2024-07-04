@@ -35,6 +35,7 @@ set(TESTSCRIPTS
     ppm2tiff_pbm.sh
     ppm2tiff_pgm.sh
     ppm2tiff_ppm.sh
+    fax2tiff.sh
     tiffcp-g3.sh
     tiffcp-g3-1d.sh
     tiffcp-g3-1d-fill.sh
@@ -43,6 +44,8 @@ set(TESTSCRIPTS
     tiffcp-g4.sh
     tiffcp-logluv.sh
     tiffcp-thumbnail.sh
+    tiffcp-lzw-compat.sh
+    tiffcp-lzw-scanline-decode.sh
     tiffdump.sh
     tiffinfo.sh
     tiffcp-split.sh
@@ -102,7 +105,12 @@ set(TESTSCRIPTS
     tiff2rgba-palette-1c-8b.sh
     tiff2rgba-rgb-3c-16b.sh
     tiff2rgba-rgb-3c-8b.sh
-    tiff2rgba-quad-tile.jpg.sh)
+    tiff2rgba-quad-tile.jpg.sh
+    tiff2rgba-ojpeg_zackthecat_subsamp22_single_strip.sh
+    tiff2rgba-ojpeg_chewey_subsamp21_multi_strip.sh
+    tiff2rgba-ojpeg_single_strip_no_rowsperstrip.sh
+    testfax4.sh
+    testdeflatelaststripextradata.sh)
 
 # This list should contain all of the TIFF files in the 'images'
 # subdirectory which are intended to be used as input images for
@@ -118,7 +126,13 @@ set(TIFFIMAGES
     images/palette-1c-8b.tiff
     images/rgb-3c-16b.tiff
     images/rgb-3c-8b.tiff
-    images/quad-tile.jpg.tiff)
+    images/quad-tile.jpg.tiff
+    images/quad-lzw-compat.tiff
+    images/lzw-single-strip.tiff
+    images/ojpeg_zackthecat_subsamp22_single_strip.tiff
+    images/ojpeg_chewey_subsamp21_multi_strip.tiff
+    images/ojpeg_single_strip_no_rowsperstrip.tiff
+    images/testfax4.tiff)
 
 set(BMPIMAGES
     images/palette-1c-8b.bmp
@@ -130,6 +144,7 @@ set(GIFIMAGES
 set(PNMIMAGES
     images/minisblack-1c-8b.pgm
     images/miniswhite-1c-1b.pbm
+    images/rgb-3c-16b.ppm
     images/rgb-3c-8b.ppm)
 
 # All uncompressed image files
@@ -147,6 +162,7 @@ set(UNCOMPRESSEDIMAGES
 # files which are not currently used by the tests.
 set(IMAGES_EXTRA_DIST
     images/README.txt
+    images/miniswhite-1c-1b.g3
     ${BMPIMAGES}
     ${GIFIMAGES}
     ${PNMIMAGES}
@@ -182,8 +198,61 @@ endif()
 add_executable(custom_dir custom_dir.c)
 target_link_libraries(custom_dir tiff port)
 
+if(NOT BUILD_SHARED_LIBS)
+add_executable(rational_precision2double rational_precision2double.c)
+target_link_libraries(rational_precision2double tiff port)
+add_test(NAME "rational_precision2double"
+         COMMAND "rational_precision2double")
+endif()
+
+if(NOT BUILD_SHARED_LIBS)
+add_executable(custom_dir_EXIF_231 custom_dir_EXIF_231.c)
+target_link_libraries(custom_dir_EXIF_231 tiff port)
+add_test(NAME "custom_dir_EXIF_231"
+         COMMAND "custom_dir_EXIF_231")
+endif()
+
+add_executable(defer_strile_loading defer_strile_loading.c)
+target_link_libraries(defer_strile_loading tiff port)
+
+add_executable(defer_strile_writing defer_strile_writing.c)
+target_link_libraries(defer_strile_writing tiff port)
+
+add_executable(testtypes testtypes.c)
+target_link_libraries(testtypes tiff port)
+
+if(WEBP_SUPPORT AND EMSCRIPTEN)
+  # Emscripten is pretty finnicky about linker flags.
+  # It needs --shared-memory if and only if atomics or bulk-memory is used.
+  foreach(target ascii_tag
+                 custom_dir
+                 defer_strile_loading
+                 defer_strile_writing
+                 long_tag
+                 rewrite
+                 short_tag
+                 strip_rw)
+    target_link_options(${target} PUBLIC "-Wl,--shared-memory")
+  endforeach()
+  if(JPEG_SUPPORT)
+    target_link_options(raw_decode PUBLIC "-Wl,--shared-memory")
+  endif()
+endif()
+
 set(TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/output")
 file(MAKE_DIRECTORY "${TEST_OUTPUT}")
+
+set(tiff_test_extra_args
+    "-DTIFFCP=$<TARGET_FILE:tiffcp>"
+    "-DTIFFINFO=$<TARGET_FILE:tiffinfo>"
+    "-DTIFFSPLIT=$<TARGET_FILE:tiffsplit>"
+    "-DLIBTIFF=$<TARGET_FILE:tiff>")
+if(WIN32)
+  list(APPEND tiff_test_extra_args "-DWIN32=${WIN32}")
+endif()
+if(CYGWIN)
+  list(APPEND tiff_test_extra_args "-DCYGWIN=${CYGWIN}")
+endif()
 
 macro(tiff_test_convert name command1 command2 command3 infile outfile validate)
   add_test(NAME "${name}"
@@ -193,9 +262,8 @@ macro(tiff_test_convert name command1 command2 command3 infile outfile validate)
            "-DCONVERT_COMMAND3=${command3}"
            "-DINFILE=${infile}"
            "-DOUTFILE=${outfile}"
-           "-DTIFFINFO=$<TARGET_FILE:tiffinfo>"
-           "-DLIBTIFF=$<TARGET_FILE:tiff>"
            "-DVALIDATE=${validate}"
+           ${tiff_test_extra_args}
            -P "${CMAKE_CURRENT_SOURCE_DIR}/TiffTest.cmake")
 endmacro()
 
@@ -205,8 +273,7 @@ macro(tiff_test_stdout name command infile outfile)
            "-DSTDOUT_COMMAND=${command}"
            "-DINFILE=${infile}"
            "-DOUTFILE=${outfile}"
-           "-DTIFFINFO=$<TARGET_FILE:tiffinfo>"
-           "-DLIBTIFF=$<TARGET_FILE:tiff>"
+           ${tiff_test_extra_args}
            -P "${CMAKE_CURRENT_SOURCE_DIR}/TiffTest.cmake")
 endmacro()
 
@@ -215,8 +282,7 @@ macro(tiff_test_reader name command infile)
            COMMAND "${CMAKE_COMMAND}"
            "-DREADER_COMMAND=${command}"
            "-DINFILE=${infile}"
-           "-DTIFFINFO=$<TARGET_FILE:tiffinfo>"
-           "-DLIBTIFF=$<TARGET_FILE:tiff>"
+           ${tiff_test_extra_args}
            -P "${CMAKE_CURRENT_SOURCE_DIR}/TiffTest.cmake")
 endmacro()
 
@@ -314,6 +380,7 @@ add_convert_test(gif2tiff palette "" "images/palette-1c-8b.gif" TRUE)
 # PPM
 add_convert_test(ppm2tiff miniswhite "" "images/miniswhite-1c-1b.pbm" TRUE)
 add_convert_test(ppm2tiff minisblack "" "images/minisblack-1c-8b.pgm" TRUE)
+add_convert_test(ppm2tiff rgb        "" "images/rgb-3c-16b.ppm"       TRUE)
 add_convert_test(ppm2tiff rgb        "" "images/rgb-3c-8b.ppm"        TRUE)
 
 # tiffcp
@@ -323,6 +390,8 @@ add_convert_test(tiffcp   g31dfill   "-c g3:1d:fill" "images/miniswhite-1c-1b.ti
 add_convert_test(tiffcp   g32d       "-c g3:2d"      "images/miniswhite-1c-1b.tiff" FALSE)
 add_convert_test(tiffcp   g32dfill   "-c g3:2d:fill" "images/miniswhite-1c-1b.tiff" FALSE)
 add_convert_test(tiffcp   g4         "-c g4"         "images/miniswhite-1c-1b.tiff" FALSE)
+add_convert_test(tiffcp   none       "-c none"       "images/quad-lzw-compat.tiff" FALSE)
+add_convert_test(tiffcp   noner1     "-c none -r 1"  "images/lzw-single-strip.tiff" FALSE)
 add_convert_test_multi(tiffcp tiffcp "" logluv "-c none" "-c sgilog" ""
                        "images/logluv-3c-16b.tiff"    FALSE)
 add_convert_test_multi(tiffcp thumbnail "" thumbnail "g3:1d" "" ""
@@ -344,9 +413,7 @@ add_test(NAME "tiffcp-split"
          "-DTESTFILES=${ESCAPED_UNCOMPRESSED}"
          "-DCONJOINED=${TEST_OUTPUT}/tiffcp-split-conjoined.tif"
          "-DSPLITFILE=${TEST_OUTPUT}/tiffcp-split-split-"
-         "-DTIFFCP=$<TARGET_FILE:tiffcp>"
-         "-DTIFFSPLIT=$<TARGET_FILE:tiffsplit>"
-         "-DLIBTIFF=$<TARGET_FILE:tiff>"
+         ${tiff_test_extra_args}
          -P "${CMAKE_CURRENT_SOURCE_DIR}/TiffSplitTest.cmake")
 add_test(NAME "tiffcp-split-join"
          COMMAND "${CMAKE_COMMAND}"
@@ -354,9 +421,7 @@ add_test(NAME "tiffcp-split-join"
          "-DCONJOINED=${TEST_OUTPUT}/tiffcp-split-join-conjoined.tif"
          "-DSPLITFILE=${TEST_OUTPUT}/tiffcp-split-join-split-"
          "-DRECONJOINED=${TEST_OUTPUT}/tiffcp-split-join-reconjoined.tif"
-         "-DTIFFCP=$<TARGET_FILE:tiffcp>"
-         "-DTIFFSPLIT=$<TARGET_FILE:tiffsplit>"
-         "-DLIBTIFF=$<TARGET_FILE:tiff>"
+         ${tiff_test_extra_args}
          -P "${CMAKE_CURRENT_SOURCE_DIR}/TiffSplitTest.cmake")
 
 # PDF
@@ -372,3 +437,7 @@ add_convert_tests(tiffcrop  doubleflip "-F both"                  TIFFIMAGES TRU
 add_convert_tests(tiffcrop  extract    "-U px -E top -X 60 -Y 60" TIFFIMAGES TRUE)
 # Test extracting the first and fourth quarters from the left side.
 add_convert_tests(tiffcrop  extractz14 "-E left -Z1:4,2:4"        TIFFIMAGES TRUE)
+
+# test types
+add_test(NAME "testtypes"
+         COMMAND "testtypes")

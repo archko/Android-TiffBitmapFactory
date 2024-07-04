@@ -1,5 +1,3 @@
-/* $Id: tiffsplit.c,v 1.23 2015-05-28 13:10:26 bfriesen Exp $ */
-
 /*
  * Copyright (c) 1992-1997 Sam Leffler
  * Copyright (c) 1992-1997 Silicon Graphics, Inc.
@@ -32,8 +30,15 @@
 
 #include "tiffio.h"
 
+#ifndef EXIT_SUCCESS
+#define EXIT_SUCCESS 0
+#endif
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE 1
+#endif
+
 #ifndef HAVE_GETOPT
-extern int getopt(int, char**, char*);
+extern int getopt(int argc, char * const argv[], const char *optstring);
 #endif
 
 #define	CopyField(tag, v) \
@@ -62,7 +67,7 @@ main(int argc, char* argv[])
 	if (argc < 2) {
                 fprintf(stderr, "%s\n\n", TIFFGetVersion());
 		fprintf(stderr, "usage: tiffsplit input.tif [prefix]\n");
-		return (-3);
+		return (EXIT_FAILURE);
 	}
 	if (argc > 2) {
 		strncpy(fname, argv[2], sizeof(fname));
@@ -85,14 +90,14 @@ main(int argc, char* argv[])
 			_TIFFfree(path);
 
 			if (out == NULL)
-				return (-2);
+				return (EXIT_FAILURE);
 			if (!tiffcp(in, out))
-				return (-1);
+				return (EXIT_FAILURE);
 			TIFFClose(out);
 		} while (TIFFReadDirectory(in));
 		(void) TIFFClose(in);
 	}
-	return (0);
+	return (EXIT_SUCCESS);
 }
 
 static void
@@ -119,7 +124,7 @@ newfilename(void)
 	if (fnum == MAXFILES) {
 		if (!defname || fname[0] == 'z') {
 			fprintf(stderr, "tiffsplit: too many files.\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		fname[0]++;
 		fnum = 0;
