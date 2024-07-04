@@ -12,6 +12,12 @@ jmp_buf NativeDecoder::strip_buf;
 jmp_buf NativeDecoder::image_buf;
 jmp_buf NativeDecoder::general_buf;
 
+/* Set our TIFF open mode to read-only (r), no memory mapping (m) and on-demand strip/tile offset/bytecount array loading (O):
+   Memory mapping makes the kind of sparse random access we require for iipsrv slower
+   On-demand loading (available in libtiff 4.1.0) enables significantly faster loading of very large TIFF files
+*/
+static char const *mode = "rmO";
+
 //Constructor for decoding from file descriptor
 NativeDecoder::NativeDecoder(JNIEnv *e, jclass c, jint fd, jobject opts, jobject listener) {
     decodingMode = DECODE_MODE_FILE_DESCRIPTOR;
@@ -193,11 +199,11 @@ jobject NativeDecoder::getBitmap(jstring path, jint fd, jobject opts, jobject li
     const char *strPath = NULL;
     if (image == nullptr) {
         if (decodingMode == DECODE_MODE_FILE_DESCRIPTOR) {
-            image = TIFFFdOpen(jFd, "", "r");
+            image = TIFFFdOpen(jFd, "", mode);
             LOGI("Tiff is open");
         } else if (decodingMode == DECODE_MODE_FILE_PATH) {
             strPath = env->GetStringUTFChars(jPath, 0);
-            image = TIFFOpen(strPath, "r");
+            image = TIFFOpen(strPath, mode);
             LOGI("Tiff is open");
         }
     }
