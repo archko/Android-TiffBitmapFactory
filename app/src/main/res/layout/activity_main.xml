@@ -84,6 +84,14 @@
             android:layout_marginLeft="10dp"
             android:text="recycle"
             android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/scale_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="scale"
+            android:textAllCaps="false" />
     </LinearLayout>
 
     <TextView
@@ -93,8 +101,18 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:visibility="gone" />
 
-    <ImageView
-        android:id="@+id/image"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+            android:id="@+id/scaleImageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </RelativeLayout>
 </LinearLayout>
