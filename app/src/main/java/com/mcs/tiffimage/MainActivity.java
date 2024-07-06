@@ -6,10 +6,10 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.text.format.Formatter;
 import android.util.Log;
@@ -18,14 +18,18 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.archko.tiff.DecodeArea;
 import com.archko.tiff.TiffBitmapFactory;
+import com.davemorrissey.labs.subscaleview.ImageSource;
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.mcs.library.TiffImage;
+import com.mcs.tiffimage.decoder.TiffImageDecoder;
+import com.mcs.tiffimage.decoder.TiffPooledImageRegionDecoder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,10 +52,12 @@ public class MainActivity extends AppCompatActivity {
     private String mPath, mStringPath;
     private Button mInfoButton;
     private Button mStreamButton, mResButton, mAssetsButton;
-    private Button factoryButton, factoryFdButton, recycleButton;
+    private Button factoryButton, factoryFdButton, recycleButton, scaleButton;
     private TextView mInfoTextView;
     private String path2 = "/sdcard/DCIM/院本清明上河图.清.陈枚等合绘.67704X2036像素.台湾故宫博物院藏[Dujin.org].tif";
     private String path3 = "/sdcard/DCIM/清院本 清明上河图(一版)陈枚、孙祜、金昆、戴洪、程志道绢本 台北故宫35.6x1152.tif";
+
+    private SubsamplingScaleImageView scaleImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +107,10 @@ public class MainActivity extends AppCompatActivity {
         factoryFdButton.setOnClickListener(mOnClickListener);
         recycleButton = findViewById(R.id.recycle_button);
         recycleButton.setOnClickListener(mOnClickListener);
+        scaleButton = findViewById(R.id.scale_button);
+        scaleButton.setOnClickListener(mOnClickListener);
+
+        scaleImageView = findViewById(R.id.scaleImageView);
     }
 
     private void initData() {
@@ -212,7 +222,9 @@ public class MainActivity extends AppCompatActivity {
                     mInfoTextView.setVisibility(View.VISIBLE);
                 }
                 TiffBitmapFactory.Options options = new TiffBitmapFactory.Options();
-                options.inSampleSize = 16;
+                options.inSampleSize = 1;
+                DecodeArea area = new DecodeArea(1000, 100, 1080, 1600);
+                options.inDecodeArea = area;
                 bitmap = factory.decodePath(path2, options);
                 mImageView.setImageBitmap(bitmap);
                 isSetBitmap = false;
@@ -236,10 +248,17 @@ public class MainActivity extends AppCompatActivity {
                 mImageView.setImageBitmap(bitmap);
                 isSetBitmap = false;*/
             } else if (id == R.id.recycle_button) {
-                factory.nativeClose();
-                factory = null;
+                if (null != factory) {
+                    factory.nativeClose();
+                    factory = null;
+                }
 
                 mImageView.setImageBitmap(null);
+            } else if (id == R.id.scale_button) {
+                scaleImageView.setExecutor(AsyncTask.SERIAL_EXECUTOR);
+                scaleImageView.setBitmapDecoderFactory(TiffImageDecoder::new);
+                scaleImageView.setRegionDecoderFactory(TiffPooledImageRegionDecoder::new);
+                scaleImageView.setImage(ImageSource.uri(path2));
             }
 
             if (isSetBitmap) {
